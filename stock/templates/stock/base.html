@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}StockManager{% endblock %}</title>
+    <title>{% block title %}AGT StockManager{% endblock %}</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; color: #1a1a2e; }
@@ -27,7 +27,7 @@
 
 {% if user.is_authenticated %}
 <nav class="navbar">
-    <strong>📦 StockManager</strong>
+    <strong>📦 AGT StockManager</strong>
     <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
         {% if request.session.boutique_active_nom %}
             <span class="boutique-badge">🏪 {{ request.session.boutique_active_nom }}</span>
