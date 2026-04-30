@@ -127,3 +127,8 @@ LOGOUT_REDIRECT_URL = 'connexion'
 
 # Durée de session (8h)
 SESSION_COOKIE_AGE = 28800
+# AJOUTE CETTE LIGNE (C'est elle qui manque !)
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+
+# Garde aussi cette ligne si tu l'as déjà mise pour WhiteNoise
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
