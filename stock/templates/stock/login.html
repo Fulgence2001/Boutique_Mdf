@@ -1,0 +1,50 @@
+{% extends 'stock/base.html' %}
+{% block title %}Connexion{% endblock %}
+
+{% block extra_css %}
+<style>
+    body { display: flex; justify-content: center; align-items: center; min-height: 100vh; background: #1a1a2e; }
+    .container { width: 100%; max-width: 420px; }
+    .card { background: white; border-radius: 16px; padding: 40px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); }
+    .card h1 { text-align: center; font-size: 24px; margin-bottom: 8px; }
+    .card p { text-align: center; color: #666; margin-bottom: 28px; font-size: 14px; }
+    .form-group { margin-bottom: 18px; }
+    .form-group label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px; color: #444; }
+    .form-group input {
+        width: 100%; padding: 12px 16px; border: 2px solid #e5e7eb;
+        border-radius: 10px; font-size: 15px; transition: border-color .2s;
+    }
+    .form-group input:focus { outline: none; border-color: #4361ee; }
+    .btn { width: 100%; padding: 13px; background: #4361ee; color: white;
+           border: none; border-radius: 10px; font-size: 16px; font-weight: 600;
+           cursor: pointer; margin-top: 8px; }
+    .btn:hover { background: #3451d1; }
+    .link { text-align: center; margin-top: 20px; font-size: 13px; color: #666; }
+    .link a { color: #4361ee; text-decoration: none; font-weight: 600; }
+    .errorlist { color: #dc2626; font-size: 13px; list-style: none; margin-top: 4px; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h1>📦 StockManager</h1>
+    <p>Connectez-vous à votre espace</p>
+
+    <form method="post">
+        {% csrf_token %}
+        {% for field in form %}
+        <div class="form-group">
+            <label>{{ field.label }}</label>
+            {{ field }}
+            {% if field.errors %}<ul class="errorlist">{% for e in field.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+        </div>
+        {% endfor %}
+        {% if form.non_field_errors %}
+            <p style="color:#dc2626; font-size:13px;">{{ form.non_field_errors.0 }}</p>
+        {% endif %}
+        <button type="submit" class="btn">Se connecter</button>
+    </form>
+
+    <p class="link">Pas encore de compte ? <a href="{% url 'inscription' %}">S'inscrire</a></p>
+</div>
+{% endblock %}

@@ -1,0 +1,141 @@
+{% extends 'stock/base.html' %}
+{% block title %}Rapport Commandes{% endblock %}
+
+{% block extra_css %}
+<style>
+    .page-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:24px; flex-wrap:wrap; gap:12px; }
+    .card { background:white; border-radius:14px; padding:24px; box-shadow:0 2px 14px rgba(0,0,0,.07); margin-bottom:20px; }
+    .card h2 { font-size:16px; font-weight:700; margin-bottom:4px; }
+    .card p { font-size:13px; color:#666; margin-bottom:16px; }
+    table { width:100%; border-collapse:collapse; font-size:13px; }
+    th { text-align:left; padding:10px 14px; background:#f8fafc; color:#666; font-weight:600; font-size:12px; }
+    td { padding:12px 14px; border-bottom:1px solid #f5f5f5; vertical-align:middle; }
+    tr:last-child td { border-bottom:none; }
+    .badge-urgent { background:#fee2e2; color:#dc2626; padding:3px 10px; border-radius:20px; font-size:11px; font-weight:700; }
+    .badge-attention { background:#fef3c7; color:#b45309; padding:3px 10px; border-radius:20px; font-size:11px; font-weight:700; }
+    .badge-ok { background:#d1fae5; color:#065f46; padding:3px 10px; border-radius:20px; font-size:11px; font-weight:600; }
+    .jours-bar { height:6px; background:#f0f0f0; border-radius:3px; margin-top:4px; min-width:80px; }
+    .jours-fill { height:100%; border-radius:3px; }
+    .btn { padding:9px 18px; border:none; border-radius:8px; font-size:13px; font-weight:600; cursor:pointer; text-decoration:none; display:inline-block; }
+    .btn-primary { background:#4361ee; color:white; }
+    .empty { text-align:center; padding:40px; color:#888; }
+    @media print {
+        .page-header a, nav, .messages { display:none !important; }
+        body { background:white; }
+        .card { box-shadow:none; border:1px solid #eee; }
+    }
+    @media(max-width:768px){ table { display:block; overflow-x:auto; } }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1>📦 Rapport de Commandes</h1>
+        <p style="color:#666; font-size:13px;">{{ boutique.nom }} · Généré le {{ aujourd_hui|date:"d/m/Y" }}</p>
+    </div>
+    <div style="display:flex; gap:8px;">
+        <button onclick="window.print()" class="btn btn-primary">🖨️ Imprimer / PDF</button>
+        <a href="{% url 'dashboard' %}" style="padding:9px 18px; background:#e5e7eb; color:#444; border-radius:8px; text-decoration:none; font-size:13px; font-weight:600;">← Dashboard</a>
+    </div>
+</div>
+
+<!-- À commander en priorité -->
+<div class="card">
+    <h2>🚨 À commander en priorité ({{ a_commander|length }} produits)</h2>
+    <p>Produits sous le seuil d'alerte ou avec moins de 15 jours de stock restant.</p>
+
+    {% if a_commander %}
+    <table>
+        <thead>
+            <tr>
+                <th>Produit</th>
+                <th>En stock</th>
+                <th>Vendu/30j</th>
+                <th>Stock restant</th>
+                <th>Qté à commander</th>
+                <th>Urgence</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in a_commander %}
+            <tr>
+                <td>
+                    <strong>{{ item.stock.produit }}</strong><br>
+                    <span style="font-size:11px; color:#888;">{{ item.stock.produit.categorie }}</span>
+                </td>
+                <td>
+                    <strong {% if item.urgence %}style="color:#dc2626"{% endif %}>
+                        {{ item.stock.quantite }}
+                    </strong>
+                </td>
+                <td>{{ item.vendu_30j }}</td>
+                <td>
+                    {% if item.jours_restants == 999 %}
+                        <span style="color:#888">— (pas de ventes)</span>
+                    {% else %}
+                        <strong>{{ item.jours_restants }} jrs</strong>
+                        <div class="jours-bar">
+                            <div class="jours-fill" style="width:{% if item.jours_restants > 30 %}100{% else %}{% widthratio item.jours_restants 30 100 %}{% endif %}%; background:{% if item.urgence %}#ef4444{% elif item.jours_restants < 15 %}#f59e0b{% else %}#10b981{% endif %}"></div>
+                        </div>
+                    {% endif %}
+                </td>
+                <td>
+                    <strong style="color:#4361ee; font-size:16px;">{{ item.qte_suggeree }}</strong>
+                    <span style="font-size:11px; color:#888;"> unités</span>
+                </td>
+                <td>
+                    {% if item.urgence %}
+                        <span class="badge-urgent">⚠️ Urgent</span>
+                    {% else %}
+                        <span class="badge-attention">⏳ Bientôt</span>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <div class="empty">
+        <p style="font-size:32px">✅</p>
+        <p>Tous les stocks sont au-dessus des seuils d'alerte !</p>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Stock OK -->
+{% if ok %}
+<div class="card">
+    <h2>✅ Stock suffisant ({{ ok|length }} produits)</h2>
+    <p>Ces produits ont plus de 15 jours de stock restant.</p>
+    <table>
+        <thead>
+            <tr>
+                <th>Produit</th>
+                <th>En stock</th>
+                <th>Vendu/30j</th>
+                <th>Jours restants</th>
+                <th>Statut</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in ok %}
+            <tr>
+                <td><strong>{{ item.stock.produit }}</strong></td>
+                <td>{{ item.stock.quantite }}</td>
+                <td>{{ item.vendu_30j }}</td>
+                <td>
+                    {% if item.jours_restants == 999 %}
+                        <span style="color:#888">∞</span>
+                    {% else %}
+                        {{ item.jours_restants }} jrs
+                    {% endif %}
+                </td>
+                <td><span class="badge-ok">✓ OK</span></td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endif %}
+{% endblock %}

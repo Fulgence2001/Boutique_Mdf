@@ -1,0 +1,447 @@
+{% extends 'stock/base.html' %}
+{% block title %}Caisse — {{ boutique.nom }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .pos-layout {
+        display: grid;
+        grid-template-columns: 1fr 380px;
+        gap: 20px;
+        align-items: start;
+    }
+    /* ── Produits ── */
+    .pos-produits { min-width: 0; }
+    .pos-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; flex-wrap:wrap; gap:10px; }
+    .search-bar { display:flex; gap:10px; margin-bottom:16px; flex-wrap:wrap; }
+    .search-bar input, .search-bar select {
+        padding:10px 14px; border:2px solid #e5e7eb; border-radius:10px; font-size:14px; flex:1; min-width:140px;
+    }
+    .search-bar input:focus, .search-bar select:focus { outline:none; border-color:#4361ee; }
+    .produits-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(160px,1fr)); gap:12px; }
+    .produit-card {
+        background:white; border-radius:12px; padding:16px; cursor:pointer;
+        border:2px solid transparent; transition:all .2s; box-shadow:0 2px 10px rgba(0,0,0,.06);
+        position:relative;
+    }
+    .produit-card:hover { border-color:#4361ee; transform:translateY(-2px); }
+    .produit-card .marque { font-size:11px; color:#888; font-weight:600; text-transform:uppercase; }
+    .produit-card .nom { font-size:14px; font-weight:700; margin:4px 0; line-height:1.3; }
+    .produit-card .prix { font-size:16px; color:#4361ee; font-weight:700; }
+    .produit-card .stock-badge {
+        position:absolute; top:10px; right:10px;
+        background:#f0f4ff; color:#4361ee; border-radius:20px;
+        font-size:11px; padding:2px 8px; font-weight:600;
+    }
+    .produit-card .stock-badge.faible { background:#fff3cd; color:#856404; }
+    /* ── Panier ── */
+    .panier-panel {
+        background:white; border-radius:16px; padding:20px;
+        box-shadow:0 4px 20px rgba(0,0,0,.1); position:sticky; top:20px;
+    }
+    .panier-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; }
+    .panier-header h2 { font-size:17px; }
+    .panier-vide { text-align:center; padding:40px 20px; color:#aaa; }
+    .panier-item {
+        border:2px solid #f0f0f0; border-radius:10px; padding:12px; margin-bottom:10px;
+    }
+    .panier-item .pi-top { display:flex; justify-content:space-between; align-items:flex-start; }
+    .panier-item .pi-nom { font-size:13px; font-weight:600; flex:1; }
+    .panier-item .pi-suppr { background:none; border:none; color:#ef4444; cursor:pointer; font-size:16px; padding:0 4px; }
+    .panier-item .pi-controls { display:flex; align-items:center; gap:8px; margin-top:8px; flex-wrap:wrap; }
+    .panier-item .qty-btn {
+        width:28px; height:28px; border-radius:6px; border:2px solid #e5e7eb;
+        background:white; cursor:pointer; font-size:16px; display:flex; align-items:center; justify-content:center;
+    }
+    .panier-item .qty-btn:hover { border-color:#4361ee; color:#4361ee; }
+    .panier-item .qty-val { font-size:15px; font-weight:700; min-width:24px; text-align:center; }
+    .panier-item .prix-input {
+        flex:1; padding:6px 10px; border:2px solid #e5e7eb; border-radius:8px;
+        font-size:13px; font-weight:600; color:#10b981; min-width:100px;
+    }
+    .panier-item .prix-input:focus { outline:none; border-color:#10b981; }
+    .panier-item .imei-select {
+        width:100%; padding:6px 10px; border:2px solid #e5e7eb; border-radius:8px;
+        font-size:12px; margin-top:6px;
+    }
+    .panier-item .sous-total { font-size:12px; color:#666; margin-top:4px; text-align:right; }
+    .divider { border:none; border-top:2px solid #f0f0f0; margin:16px 0; }
+    .panier-total { display:flex; justify-content:space-between; font-size:18px; font-weight:700; margin-bottom:8px; }
+    .panier-benefice { display:flex; justify-content:space-between; font-size:13px; color:#10b981; margin-bottom:16px; }
+    .client-section { margin-bottom:16px; }
+    .client-section label { font-size:12px; font-weight:600; color:#666; display:block; margin-bottom:5px; }
+    .client-section input, .client-section select {
+        width:100%; padding:9px 13px; border:2px solid #e5e7eb; border-radius:8px; font-size:13px; margin-bottom:8px;
+    }
+    .client-section input:focus, .client-section select:focus { outline:none; border-color:#4361ee; }
+    .btn-valider {
+        width:100%; padding:16px; background:#4361ee; color:white; border:none;
+        border-radius:12px; font-size:16px; font-weight:700; cursor:pointer; transition:background .2s;
+    }
+    .btn-valider:hover { background:#3451d1; }
+    .btn-valider:disabled { background:#a5b4fc; cursor:not-allowed; }
+    .btn-vider { background:none; border:none; color:#ef4444; font-size:13px; cursor:pointer; }
+    /* ── Modal IMEI ── */
+    .modal-overlay {
+        display:none; position:fixed; inset:0; background:rgba(0,0,0,.5);
+        z-index:1000; align-items:center; justify-content:center;
+    }
+    .modal-overlay.open { display:flex; }
+    .modal { background:white; border-radius:16px; padding:28px; width:90%; max-width:440px; }
+    .modal h3 { margin-bottom:16px; }
+    .modal-imei-list { max-height:280px; overflow-y:auto; }
+    .imei-option {
+        padding:12px; border:2px solid #e5e7eb; border-radius:10px;
+        margin-bottom:8px; cursor:pointer; transition:all .2s;
+    }
+    .imei-option:hover, .imei-option.selected { border-color:#4361ee; background:#f0f4ff; }
+    .imei-option .imei-code { font-family:monospace; font-size:13px; font-weight:600; }
+    .imei-option .imei-info { font-size:12px; color:#666; margin-top:2px; }
+    .modal-btns { display:flex; gap:10px; margin-top:16px; }
+    .modal-btns button { flex:1; padding:11px; border-radius:10px; border:none; cursor:pointer; font-weight:600; font-size:14px; }
+    /* ── Toast ── */
+    .toast {
+        position:fixed; bottom:24px; right:24px; background:#1a1a2e; color:white;
+        padding:14px 20px; border-radius:12px; font-size:14px; z-index:2000;
+        transform:translateY(100px); opacity:0; transition:all .3s;
+    }
+    .toast.show { transform:translateY(0); opacity:1; }
+    .toast.success { border-left:4px solid #10b981; }
+    .toast.error { border-left:4px solid #ef4444; }
+    @media(max-width:900px){
+        .pos-layout { grid-template-columns:1fr; }
+        .panier-panel { position:static; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="pos-header">
+    <div>
+        <h1>🛒 Point de Vente</h1>
+        <p style="color:#666; font-size:13px">{{ boutique.nom }} · {{ ventes_jour }} vente(s) aujourd'hui</p>
+    </div>
+    <a href="{% url 'vente_historique' %}" style="color:#4361ee; font-size:14px; text-decoration:none; font-weight:600;">
+        📋 Historique du jour →
+    </a>
+</div>
+
+<div class="pos-layout">
+
+    <!-- ── Catalogue Produits ── -->
+    <div class="pos-produits">
+        <form method="get" class="search-bar">
+            <input type="text" name="q" value="{{ q }}" placeholder="🔍 Rechercher un produit...">
+            <select name="marque" onchange="this.form.submit()">
+                <option value="">Toutes marques</option>
+                {% for m in marques %}
+                    <option value="{{ m.id }}" {% if marque_id == m.id|stringformat:"s" %}selected{% endif %}>{{ m.nom }}</option>
+                {% endfor %}
+            </select>
+            <button type="submit" style="padding:10px 18px; background:#4361ee; color:white; border:none; border-radius:10px; cursor:pointer; font-weight:600;">Filtrer</button>
+        </form>
+
+        {% if stocks %}
+        <div class="produits-grid">
+            {% for stock in stocks %}
+            <div class="produit-card" onclick="ajouterAuPanier({{ stock.id }}, '{{ stock.produit.marque }}', '{{ stock.produit.nom }}', {{ stock.prix_vente_suggere }}, {{ stock.quantite }}, '{{ stock.produit.type_produit }}')">
+                <span class="stock-badge {% if stock.est_sous_seuil %}faible{% endif %}">
+                    {{ stock.quantite }} dispo
+                </span>
+                <p class="marque">{{ stock.produit.marque }}</p>
+                <p class="nom">{{ stock.produit.nom }}</p>
+                <p class="prix">{{ stock.prix_vente_suggere|floatformat:0 }} F</p>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div style="text-align:center; padding:60px; color:#aaa;">
+            <p style="font-size:40px">📭</p>
+            <p>Aucun produit disponible en stock.</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- ── Panier ── -->
+    <div class="panier-panel">
+        <div class="panier-header">
+            <h2>🧾 Panier</h2>
+            <button class="btn-vider" onclick="viderPanier()">Vider</button>
+        </div>
+
+        <div id="panier-items">
+            <div class="panier-vide" id="panier-vide">
+                <p style="font-size:32px">🛒</p>
+                <p>Cliquez sur un produit pour l'ajouter</p>
+            </div>
+        </div>
+
+        <hr class="divider">
+
+        <div class="panier-total">
+            <span>Total</span>
+            <span id="total-display">0 F</span>
+        </div>
+        <div class="panier-benefice">
+            <span>Bénéfice estimé</span>
+            <span id="benefice-display">0 F</span>
+        </div>
+
+        <div class="client-section">
+            <label>Mode de paiement</label>
+            <select id="mode-paiement">
+                <option value="especes">💵 Espèces</option>
+                <option value="mobile_money">📱 Mobile Money</option>
+                <option value="virement">🏦 Virement</option>
+                <option value="credit">📝 Crédit</option>
+            </select>
+            <label>Nom client (optionnel)</label>
+            <input type="text" id="nom-client" placeholder="Ex: Kofi Mensah">
+            <label>Téléphone client (optionnel)</label>
+            <input type="text" id="tel-client" placeholder="Ex: +229 97 00 00 00">
+        </div>
+
+        <button class="btn-valider" id="btn-valider" onclick="validerVente()" disabled>
+            ✅ Valider la vente
+        </button>
+    </div>
+</div>
+
+<!-- ── Modal sélection IMEI ── -->
+<div class="modal-overlay" id="modal-imei">
+    <div class="modal">
+        <h3>📱 Sélectionner un IMEI</h3>
+        <p id="modal-produit-nom" style="color:#666; font-size:13px; margin-bottom:14px;"></p>
+        <div class="modal-imei-list" id="modal-imei-list"></div>
+        <div class="modal-btns">
+            <button onclick="fermerModal()" style="background:#e5e7eb; color:#444;">Annuler</button>
+            <button onclick="confirmerIMEI()" style="background:#4361ee; color:white;">Confirmer</button>
+        </div>
+    </div>
+</div>
+
+<!-- Toast notification -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ── État du panier ─────────────────────────────────
+let panier = [];
+let imeiEnCours = null;
+let imeiSelectionne = null;
+
+// ── Ajouter au panier ──────────────────────────────
+function ajouterAuPanier(stockId, marque, nom, prixSuggere, stockDispo, typeProduit) {
+    const existant = panier.find(p => p.stock_id === stockId);
+    if (existant) {
+        if (existant.quantite >= stockDispo) {
+            afficherToast('Stock insuffisant !', 'error');
+            return;
+        }
+        existant.quantite++;
+    } else {
+        panier.push({
+            stock_id: stockId,
+            marque: marque,
+            nom: nom,
+            prix_achat: 0, // sera récupéré côté serveur
+            prix_vente: prixSuggere,
+            quantite: 1,
+            stock_dispo: stockDispo,
+            type_produit: typeProduit,
+            imei_id: null,
+            imei_code: null,
+        });
+    }
+
+    // Si smartphone → proposer IMEI
+    if (typeProduit === 'smartphone' && !existant) {
+        ouvrirModalIMEI(stockId, marque + ' ' + nom, panier.length - 1);
+    } else {
+        renderPanier();
+        afficherToast(nom + ' ajouté !', 'success');
+    }
+}
+
+// ── Supprimer du panier ────────────────────────────
+function supprimerDuPanier(index) {
+    panier.splice(index, 1);
+    renderPanier();
+}
+
+function viderPanier() {
+    panier = [];
+    renderPanier();
+}
+
+// ── Changer quantité ───────────────────────────────
+function changerQty(index, delta) {
+    const item = panier[index];
+    const nouvelle = item.quantite + delta;
+    if (nouvelle < 1) { supprimerDuPanier(index); return; }
+    if (nouvelle > item.stock_dispo) { afficherToast('Stock insuffisant !', 'error'); return; }
+    item.quantite = nouvelle;
+    renderPanier();
+}
+
+// ── Changer prix vente ─────────────────────────────
+function changerPrix(index, valeur) {
+    panier[index].prix_vente = parseFloat(valeur) || 0;
+    mettreAJourTotaux();
+}
+
+// ── Render panier ──────────────────────────────────
+function renderPanier() {
+    const container = document.getElementById('panier-items');
+    const vide = document.getElementById('panier-vide');
+
+    if (panier.length === 0) {
+        container.innerHTML = '';
+        container.appendChild(vide);
+        vide.style.display = 'block';
+        document.getElementById('btn-valider').disabled = true;
+        mettreAJourTotaux();
+        return;
+    }
+
+    vide.style.display = 'none';
+    let html = '';
+    panier.forEach((item, i) => {
+        const sous_total = item.quantite * item.prix_vente;
+        html += `
+        <div class="panier-item">
+            <div class="pi-top">
+                <div class="pi-nom">${item.marque} ${item.nom}</div>
+                <button class="pi-suppr" onclick="supprimerDuPanier(${i})">✕</button>
+            </div>
+            <div class="pi-controls">
+                <button class="qty-btn" onclick="changerQty(${i}, -1)">−</button>
+                <span class="qty-val">${item.quantite}</span>
+                <button class="qty-btn" onclick="changerQty(${i}, +1)">+</button>
+                <input
+                    type="number"
+                    class="prix-input"
+                    value="${item.prix_vente}"
+                    min="0"
+                    onchange="changerPrix(${i}, this.value)"
+                    title="Prix de vente négocié"
+                > F
+            </div>
+            ${item.imei_code ? `<div style="font-size:11px;color:#666;margin-top:6px;">📱 IMEI: <code>${item.imei_code}</code></div>` : ''}
+            <div class="sous-total">Sous-total : ${sous_total.toLocaleString('fr-FR')} F</div>
+        </div>`;
+    });
+
+    container.innerHTML = html;
+    document.getElementById('btn-valider').disabled = false;
+    mettreAJourTotaux();
+}
+
+// ── Totaux ─────────────────────────────────────────
+function mettreAJourTotaux() {
+    const total = panier.reduce((s, p) => s + p.quantite * p.prix_vente, 0);
+    document.getElementById('total-display').textContent = total.toLocaleString('fr-FR') + ' F';
+    // Bénéfice approximatif (le prix d'achat réel est figé côté serveur)
+    document.getElementById('benefice-display').textContent = '(calculé à la validation)';
+}
+
+// ── Modal IMEI ─────────────────────────────────────
+function ouvrirModalIMEI(stockId, nomProduit, panierIndex) {
+    imeiEnCours = panierIndex;
+    imeiSelectionne = null;
+    document.getElementById('modal-produit-nom').textContent = nomProduit;
+    document.getElementById('modal-imei-list').innerHTML = '<p style="text-align:center;color:#888">Chargement...</p>';
+    document.getElementById('modal-imei').classList.add('open');
+
+    fetch(`/pos/api/imeis/${stockId}/`)
+        .then(r => r.json())
+        .then(data => {
+            const list = document.getElementById('modal-imei-list');
+            if (!data.imeis.length) {
+                list.innerHTML = '<p style="color:#888;text-align:center;">Aucun IMEI disponible — la quantité sera utilisée.</p>';
+                return;
+            }
+            list.innerHTML = data.imeis.map(imei => `
+                <div class="imei-option" onclick="selectionnerIMEI(this, ${imei.id}, '${imei.imei}')">
+                    <div class="imei-code">${imei.imei}</div>
+                    <div class="imei-info">${imei.couleur || '—'} · ${imei.stockage || '—'}</div>
+                </div>
+            `).join('');
+        });
+}
+
+function selectionnerIMEI(el, id, code) {
+    document.querySelectorAll('.imei-option').forEach(e => e.classList.remove('selected'));
+    el.classList.add('selected');
+    imeiSelectionne = { id, code };
+}
+
+function confirmerIMEI() {
+    if (imeiSelectionne && imeiEnCours !== null) {
+        panier[imeiEnCours].imei_id = imeiSelectionne.id;
+        panier[imeiEnCours].imei_code = imeiSelectionne.code;  // ← corrigé
+    }
+    fermerModal();
+    renderPanier();
+    afficherToast('Produit ajouté !', 'success');
+}
+
+function fermerModal() {
+    document.getElementById('modal-imei').classList.remove('open');
+    imeiEnCours = null;
+    if (!imeiSelectionne) renderPanier(); // Ajout sans IMEI
+}
+
+// ── Valider la vente ───────────────────────────────
+function validerVente() {
+    if (!panier.length) return;
+
+    const btn = document.getElementById('btn-valider');
+    btn.disabled = true;
+    btn.textContent = '⏳ Validation...';
+
+    const payload = {
+        panier: panier.map(p => ({
+            stock_id: p.stock_id,
+            quantite: p.quantite,
+            prix_vente: p.prix_vente,
+            imei_id: p.imei_id,
+        })),
+        mode_paiement: document.getElementById('mode-paiement').value,
+        nom_client: document.getElementById('nom-client').value,
+        telephone_client: document.getElementById('tel-client').value,
+    };
+
+    fetch("{% url 'valider_vente' %}", {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': '{{ csrf_token }}',
+        },
+        body: JSON.stringify(payload),
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.succes) {
+            window.location.href = `/ventes/${data.vente_id}/`;
+        } else {
+            const erreurs = data.erreurs || [data.erreur];
+            erreurs.forEach(e => afficherToast(e, 'error'));
+            btn.disabled = false;
+            btn.textContent = '✅ Valider la vente';
+        }
+    })
+    .catch(() => {
+        afficherToast('Erreur réseau, réessayez.', 'error');
+        btn.disabled = false;
+        btn.textContent = '✅ Valider la vente';
+    });
+}
+
+// ── Toast ──────────────────────────────────────────
+function afficherToast(msg, type='success') {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className = `toast ${type} show`;
+    setTimeout(() => t.classList.remove('show'), 3000);
+}
+</script>
+{% endblock %}

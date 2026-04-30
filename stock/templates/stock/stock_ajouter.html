@@ -1,0 +1,226 @@
+{% extends 'stock/base.html' %}
+{% block title %}Ajouter au Stock{% endblock %}
+
+{% block extra_css %}
+<style>
+    .tabs { display:flex; gap:8px; margin-bottom:24px; }
+    .tab { padding:10px 24px; border-radius:8px; cursor:pointer; border:2px solid #e5e7eb; background:white; font-weight:600; font-size:14px; }
+    .tab.active { background:#4361ee; color:white; border-color:#4361ee; }
+    .panel { display:none; }
+    .panel.active { display:block; }
+    .card { background:white; border-radius:14px; padding:28px; box-shadow:0 4px 16px rgba(0,0,0,.07); margin-bottom:20px; }
+    .card h2 { font-size:17px; margin-bottom:20px; padding-bottom:12px; border-bottom:2px solid #f0f0f0; }
+    .form-row { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+    .form-group { margin-bottom:16px; }
+    .form-group label { display:block; font-size:13px; font-weight:600; margin-bottom:6px; color:#444; }
+    .form-group input, .form-group select, .form-group textarea {
+        width:100%; padding:11px 14px; border:2px solid #e5e7eb;
+        border-radius:10px; font-size:14px; font-family:inherit;
+    }
+    .form-group input:focus, .form-group select:focus, .form-group textarea:focus { outline:none; border-color:#4361ee; }
+    .field-error { color:#dc2626; font-size:12px; margin-top:4px; }
+    .form-errors { background:#fee2e2; border-radius:10px; padding:14px 18px; margin-bottom:20px; }
+    .form-errors p { color:#991b1b; font-size:13px; margin:3px 0; }
+    .btn { padding:11px 24px; border:none; border-radius:10px; font-size:14px; cursor:pointer; font-weight:600; }
+    .btn-primary { background:#4361ee; color:white; }
+    .produit-select { border:2px solid #e5e7eb; border-radius:10px; padding:12px; cursor:pointer; margin-bottom:10px; transition:all .2s; }
+    .produit-select:hover, .produit-select.selected { border-color:#4361ee; background:#f0f4ff; }
+    .produit-select h3 { font-size:14px; margin:0; }
+    .produit-select p { font-size:12px; color:#666; margin:4px 0 0; }
+    #search-existant { width:100%; padding:11px 14px; border:2px solid #e5e7eb; border-radius:10px; font-size:14px; margin-bottom:16px; }
+    #search-existant:focus { outline:none; border-color:#4361ee; }
+    @media(max-width:600px){ .form-row { grid-template-columns:1fr; } }
+</style>
+{% endblock %}
+
+{% block content %}
+<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px;">
+    <h1>+ Ajouter au Stock</h1>
+    <a href="{% url 'stock_liste' %}" style="color:#666; font-size:14px; text-decoration:none;">← Retour</a>
+</div>
+
+<div class="tabs">
+    <button class="tab active" onclick="switchTab('nouveau', event)">🆕 Nouveau produit</button>
+    <button class="tab" onclick="switchTab('existant', event)">📦 Produit existant</button>
+</div>
+
+<!-- ONGLET 1 : Nouveau Produit -->
+<div class="panel active" id="panel-nouveau">
+
+    {% if produit_form.errors or stock_form.errors %}
+    <div class="form-errors">
+        <strong>❌ Erreurs détectées :</strong>
+        {% for field in produit_form %}
+            {% for error in field.errors %}
+                <p>{{ field.label }} : {{ error }}</p>
+            {% endfor %}
+        {% endfor %}
+        {% for error in produit_form.non_field_errors %}
+            <p>{{ error }}</p>
+        {% endfor %}
+        {% for field in stock_form %}
+            {% for error in field.errors %}
+                <p>{{ field.label }} : {{ error }}</p>
+            {% endfor %}
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        <div class="card">
+            <h2>📋 Informations Produit</h2>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Nom du produit *</label>
+                    {{ produit_form.nom }}
+                    {% if produit_form.nom.errors %}<p class="field-error">{{ produit_form.nom.errors.0 }}</p>{% endif %}
+                </div>
+                <div class="form-group">
+                    <label>Marque *</label>
+                    {{ produit_form.marque }}
+                    {% if produit_form.marque.errors %}<p class="field-error">{{ produit_form.marque.errors.0 }}</p>{% endif %}
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Catégorie *</label>
+                    {{ produit_form.categorie }}
+                    {% if produit_form.categorie.errors %}<p class="field-error">{{ produit_form.categorie.errors.0 }}</p>{% endif %}
+                </div>
+                <div class="form-group">
+                    <label>Type *</label>
+                    {{ produit_form.type_produit }}
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Seuil d'alerte</label>
+                    {{ produit_form.seuil_alerte }}
+                </div>
+                <div class="form-group">
+                    <label>Photo</label>
+                    {{ produit_form.image }}
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Description</label>
+                {{ produit_form.description }}
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>📦 Stock Initial</h2>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Quantité *</label>
+                    {{ stock_form.quantite }}
+                    {% if stock_form.quantite.errors %}<p class="field-error">{{ stock_form.quantite.errors.0 }}</p>{% endif %}
+                </div>
+                <div class="form-group">
+                    <label>Date d'arrivage</label>
+                    {{ stock_form.date_dernier_arrivage }}
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Prix d'achat (FCFA) *</label>
+                    {{ stock_form.prix_achat }}
+                    {% if stock_form.prix_achat.errors %}<p class="field-error">{{ stock_form.prix_achat.errors.0 }}</p>{% endif %}
+                </div>
+                <div class="form-group">
+                    <label>Prix de vente conseillé (FCFA) *</label>
+                    {{ stock_form.prix_vente_suggere }}
+                    {% if stock_form.prix_vente_suggere.errors %}<p class="field-error">{{ stock_form.prix_vente_suggere.errors.0 }}</p>{% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Champ caché pour identifier l'onglet soumis -->
+        <input type="hidden" name="form_type" value="nouveau">
+        <button type="submit" class="btn btn-primary">✅ Enregistrer le produit</button>
+    </form>
+</div>
+
+<!-- ONGLET 2 : Produit Existant -->
+<div class="panel" id="panel-existant">
+<div class="card">
+    <h2>📦 Choisir un produit existant</h2>
+    {% if not produits_existants %}
+        <p style="color:#888; text-align:center; padding:20px">
+            Aucun produit dans le catalogue. Créez d'abord un produit via l'onglet "Nouveau produit".
+        </p>
+    {% else %}
+        <input type="text" id="search-existant" placeholder="🔍 Rechercher...">
+        <div id="liste-produits">
+            {% for p in produits_existants %}
+            <div class="produit-select" onclick="selectProduit({{ p.id }}, '{{ p }}', event)">
+                <h3>{{ p }}</h3>
+                <p>{{ p.categorie }} · {{ p.get_type_produit_display }}</p>
+            </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+</div>
+
+<form method="post" id="form-existant" style="display:none;">
+    {% csrf_token %}
+    <input type="hidden" name="produit_existant_id" id="produit_existant_id">
+    <input type="hidden" name="form_type" value="existant">
+    <div class="card">
+        <h2 id="titre-existant">Ajouter du stock</h2>
+        <div class="form-row">
+            <div class="form-group">
+                <label>Quantité à ajouter *</label>
+                <input type="number" name="quantite" min="1" placeholder="Ex: 5" required>
+            </div>
+            <div class="form-group">
+                <label>Prix d'achat (FCFA) *</label>
+                <input type="number" name="prix_achat" placeholder="Ex: 85000" required>
+            </div>
+        </div>
+        <div class="form-row">
+            <div class="form-group">
+                <label>Prix de vente conseillé (FCFA) *</label>
+                <input type="number" name="prix_vente_suggere" placeholder="Ex: 95000" required>
+            </div>
+        </div>
+    </div>
+    <button type="submit" class="btn btn-primary">✅ Ajouter au stock</button>
+    <button type="button" onclick="cancelSelect()" class="btn" style="background:#e5e7eb;color:#444;margin-left:10px">Annuler</button>
+</form>
+</div>
+
+<script>
+function switchTab(tab, event) {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    document.getElementById('panel-' + tab).classList.add('active');
+    event.target.classList.add('active');
+}
+
+function selectProduit(id, nom, event) {
+    document.getElementById('produit_existant_id').value = id;
+    document.getElementById('titre-existant').textContent = '📦 Ajouter stock : ' + nom;
+    document.getElementById('form-existant').style.display = 'block';
+    document.querySelectorAll('.produit-select').forEach(el => el.classList.remove('selected'));
+    event.currentTarget.classList.add('selected');
+    document.getElementById('form-existant').scrollIntoView({behavior: 'smooth'});
+}
+
+function cancelSelect() {
+    document.getElementById('form-existant').style.display = 'none';
+    document.querySelectorAll('.produit-select').forEach(el => el.classList.remove('selected'));
+}
+
+const searchInput = document.getElementById('search-existant');
+if (searchInput) {
+    searchInput.addEventListener('input', function() {
+        const q = this.value.toLowerCase();
+        document.querySelectorAll('.produit-select').forEach(el => {
+            el.style.display = el.textContent.toLowerCase().includes(q) ? 'block' : 'none';
+        });
+    });
+}
+</script>
+{% endblock %}

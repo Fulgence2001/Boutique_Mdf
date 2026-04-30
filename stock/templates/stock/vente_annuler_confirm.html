@@ -1,0 +1,21 @@
+{% extends 'stock/base.html' %}
+{% block title %}Annuler la vente{% endblock %}
+
+{% block content %}
+<div style="background:white; border-radius:14px; padding:32px; max-width:480px; margin:0 auto; text-align:center; box-shadow:0 4px 16px rgba(0,0,0,.07)">
+    <p style="font-size:48px">↩️</p>
+    <h2>Annuler cette vente ?</h2>
+    <p style="color:#666; margin:12px 0 8px; font-size:14px">
+        Vente <strong>#{{ vente.reference|stringformat:"s"|slice:":8"|upper }}</strong>
+        du {{ vente.date_vente|date:"d/m/Y à H:i" }}
+    </p>
+    <p style="color:#666; font-size:14px; margin-bottom:24px">
+        Le stock sera automatiquement restitué.
+    </p>
+    <form method="post" style="display:flex; gap:12px; justify-content:center;">
+        {% csrf_token %}
+        <button type="submit" style="padding:12px 28px; background:#ef4444; color:white; border:none; border-radius:10px; font-size:15px; cursor:pointer; font-weight:600;">Confirmer l'annulation</button>
+        <a href="{% url 'vente_detail' vente.id %}" style="padding:12px 28px; background:#e5e7eb; color:#444; border-radius:10px; font-size:15px; text-decoration:none; font-weight:600;">Retour</a>
+    </form>
+</div>
+{% endblock %}

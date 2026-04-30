@@ -1,0 +1,56 @@
+{% extends 'stock/base.html' %}
+{% block title %}Choisir une boutique{% endblock %}
+
+{% block extra_css %}
+<style>
+    .page-header { text-align: center; margin-bottom: 32px; }
+    .page-header h1 { font-size: 26px; }
+    .page-header p { color: #666; margin-top: 6px; }
+    .boutiques-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 16px; }
+    .boutique-card {
+        background: white; border-radius: 14px; padding: 28px;
+        text-align: center; box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        border: 2px solid transparent; transition: all .2s; cursor: pointer;
+    }
+    .boutique-card:hover { border-color: #4361ee; transform: translateY(-4px); }
+    .boutique-card .icon { font-size: 40px; margin-bottom: 12px; }
+    .boutique-card h2 { font-size: 18px; margin-bottom: 6px; }
+    .boutique-card p { font-size: 13px; color: #666; }
+    .btn-select { margin-top: 16px; padding: 10px 24px; background: #4361ee; color: white; border: none; border-radius: 8px; font-size: 14px; cursor: pointer; }
+    .btn-creer { display: block; margin: 32px auto 0; padding: 12px 28px; background: #10b981; color: white; border: none; border-radius: 10px; font-size: 15px; cursor: pointer; text-decoration: none; }
+    .empty { text-align: center; padding: 60px 20px; color: #666; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>🏪 Vos Boutiques</h1>
+    <p>Sélectionnez la boutique sur laquelle vous souhaitez travailler</p>
+</div>
+
+{% if boutiques %}
+<div class="boutiques-grid">
+    {% for boutique in boutiques %}
+    <div class="boutique-card">
+        <div class="icon">🏬</div>
+        <h2>{{ boutique.nom }}</h2>
+        <p>{{ boutique.adresse|default:"Adresse non renseignée" }}</p>
+        <form method="post">
+            {% csrf_token %}
+            <input type="hidden" name="boutique_id" value="{{ boutique.id }}">
+            <button type="submit" class="btn-select">Accéder →</button>
+        </form>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="empty">
+    <p style="font-size:48px">📦</p>
+    <p>Vous n'avez aucune boutique pour le moment.</p>
+</div>
+{% endif %}
+
+{% if user.profil.est_proprietaire %}
+<a href="{% url 'creer_boutique' %}" class="btn-creer">+ Créer une nouvelle boutique</a>
+{% endif %}
+{% endblock %}

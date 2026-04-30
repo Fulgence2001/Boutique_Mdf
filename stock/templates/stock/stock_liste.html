@@ -1,0 +1,140 @@
+{% extends 'stock/base.html' %}
+{% block title %}Stock — {{ boutique.nom }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .page-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:24px; flex-wrap:wrap; gap:12px; }
+    .stats-bar { display:grid; grid-template-columns:repeat(auto-fill,minmax(160px,1fr)); gap:12px; margin-bottom:24px; }
+    .stat-card { background:white; border-radius:12px; padding:18px; text-align:center; box-shadow:0 2px 12px rgba(0,0,0,.06); }
+    .stat-card .val { font-size:28px; font-weight:700; color:#4361ee; }
+    .stat-card .val.alerte { color:#ef4444; }
+    .stat-card .lbl { font-size:12px; color:#666; margin-top:4px; }
+    .filtres { background:white; border-radius:12px; padding:16px; margin-bottom:20px; display:flex; gap:12px; flex-wrap:wrap; box-shadow:0 2px 12px rgba(0,0,0,.06); }
+    .filtres input, .filtres select { padding:9px 14px; border:2px solid #e5e7eb; border-radius:8px; font-size:14px; }
+    .filtres input:focus, .filtres select:focus { outline:none; border-color:#4361ee; }
+    .btn { padding:9px 20px; border:none; border-radius:8px; font-size:14px; cursor:pointer; font-weight:600; text-decoration:none; display:inline-block; }
+    .btn-primary { background:#4361ee; color:white; }
+    .btn-danger { background:#ef4444; color:white; }
+    .btn-warning { background:#f59e0b; color:white; }
+    .btn-sm { padding:6px 14px; font-size:13px; }
+    table { width:100%; border-collapse:collapse; background:white; border-radius:12px; overflow:hidden; box-shadow:0 2px 12px rgba(0,0,0,.06); }
+    th { background:#f8fafc; padding:12px 16px; text-align:left; font-size:13px; color:#666; font-weight:600; border-bottom:1px solid #f0f0f0; }
+    td { padding:13px 16px; border-bottom:1px solid #f8f8f8; font-size:14px; vertical-align:middle; }
+    tr:last-child td { border-bottom:none; }
+    tr:hover td { background:#fafbff; }
+    .badge { display:inline-block; padding:3px 10px; border-radius:20px; font-size:12px; font-weight:600; }
+    .badge-ok { background:#d1fae5; color:#065f46; }
+    .badge-alerte { background:#fee2e2; color:#991b1b; }
+    .badge-warning { background:#fef3c7; color:#92400e; }
+    .row-alerte td { background:#fff8f8 !important; }
+    .alerte-icon { color:#ef4444; font-size:16px; }
+    .empty { text-align:center; padding:60px; color:#888; }
+    @media(max-width:768px){ table { display:block; overflow-x:auto; } }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1>📦 Stock</h1>
+        <p style="color:#666; font-size:14px; margin-top:4px">{{ boutique.nom }}</p>
+    </div>
+    <a href="{% url 'stock_ajouter' %}" class="btn btn-primary">+ Ajouter un produit</a>
+</div>
+
+<!-- Stats -->
+<div class="stats-bar">
+    <div class="stat-card">
+        <div class="val">{{ total_produits }}</div>
+        <div class="lbl">Références</div>
+    </div>
+    <div class="stat-card">
+        <div class="val">{{ total_articles }}</div>
+        <div class="lbl">Articles en stock</div>
+    </div>
+    <div class="stat-card">
+        <div class="val alerte">{{ nb_alertes }}</div>
+        <div class="lbl">⚠️ Alertes stock</div>
+    </div>
+</div>
+
+<!-- Filtres -->
+<form method="get" class="filtres">
+    <input type="text" name="q" value="{{ q }}" placeholder="🔍 Rechercher un produit...">
+    <select name="marque">
+        <option value="">Toutes les marques</option>
+        {% for m in marques %}
+            <option value="{{ m.id }}" {% if marque_id == m.id|stringformat:"s" %}selected{% endif %}>{{ m.nom }}</option>
+        {% endfor %}
+    </select>
+    <select name="categorie">
+        <option value="">Toutes catégories</option>
+        {% for c in categories %}
+            <option value="{{ c.id }}" {% if categorie_id == c.id|stringformat:"s" %}selected{% endif %}>{{ c.nom }}</option>
+        {% endfor %}
+    </select>
+    <label style="display:flex; align-items:center; gap:6px; font-size:14px; cursor:pointer;">
+        <input type="checkbox" name="alerte" value="1" {% if alerte_only %}checked{% endif %}> ⚠️ Alertes uniquement
+    </label>
+    <button type="submit" class="btn btn-primary">Filtrer</button>
+    <a href="{% url 'stock_liste' %}" class="btn" style="background:#e5e7eb; color:#444;">Réinitialiser</a>
+</form>
+
+<!-- Tableau -->
+{% if stocks %}
+<table>
+    <thead>
+        <tr>
+            <th>Produit</th>
+            <th>Marque</th>
+            <th>Catégorie</th>
+            <th>Quantité</th>
+            <th>Prix achat</th>
+            <th>Prix vente</th>
+            <th>Statut</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for stock in stocks %}
+        <tr {% if stock.est_sous_seuil %}class="row-alerte"{% endif %}>
+            <td>
+                {% if stock.est_sous_seuil %}<span class="alerte-icon">⚠️</span> {% endif %}
+                <strong>{{ stock.produit.nom }}</strong>
+            </td>
+            <td>{{ stock.produit.marque }}</td>
+            <td>{{ stock.produit.categorie }}</td>
+            <td>
+                <strong {% if stock.est_sous_seuil %}style="color:#ef4444"{% endif %}>
+                    {{ stock.quantite }}
+                </strong>
+                <span style="color:#aaa; font-size:12px">/ seuil {{ stock.produit.seuil_alerte }}</span>
+            </td>
+            <td>{{ stock.prix_achat|floatformat:0 }} F</td>
+            <td>{{ stock.prix_vente_suggere|floatformat:0 }} F</td>
+            <td>
+                {% if stock.est_sous_seuil %}
+                    <span class="badge badge-alerte">⚠️ Critique</span>
+                {% elif stock.quantite == 0 %}
+                    <span class="badge" style="background:#f3f4f6;color:#6b7280">Épuisé</span>
+                {% else %}
+                    <span class="badge badge-ok">✓ Disponible</span>
+                {% endif %}
+            </td>
+            <td>
+                <a href="{% url 'stock_detail' stock.pk %}" class="btn btn-sm" style="background:#e0e7ff;color:#4361ee">Détail</a>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<div class="empty">
+    <p style="font-size:48px">📭</p>
+    <p>Aucun produit trouvé.</p>
+    {% if not q and not marque_id %}
+        <a href="{% url 'stock_ajouter' %}" class="btn btn-primary" style="margin-top:16px">+ Ajouter le premier produit</a>
+    {% endif %}
+</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}StockManager{% endblock %}</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; color: #1a1a2e; }
+        .navbar {
+            background: #1a1a2e; color: white; padding: 12px 24px;
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .navbar a { color: #4cc9f0; text-decoration: none; margin-left: 16px; font-size: 14px; }
+        .navbar .boutique-badge {
+            background: #4361ee; padding: 4px 12px; border-radius: 20px; font-size: 13px;
+        }
+        .messages { padding: 12px 24px; }
+        .alert { padding: 10px 16px; border-radius: 8px; margin-bottom: 8px; font-size: 14px; }
+        .alert-success { background: #d1fae5; color: #065f46; }
+        .alert-error { background: #fee2e2; color: #991b1b; }
+        .container { max-width: 1100px; margin: 0 auto; padding: 24px; }
+    </style>
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+
+{% if user.is_authenticated %}
+<nav class="navbar">
+    <strong>📦 StockManager</strong>
+    <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+        {% if request.session.boutique_active_nom %}
+            <span class="boutique-badge">🏪 {{ request.session.boutique_active_nom }}</span>
+            <a href="{% url 'dashboard' %}">Dashboard</a>
+            <a href="{% url 'stock_liste' %}">Stock</a>
+            <a href="{% url 'pos' %}">🛒 Caisse</a>
+            <a href="{% url 'vente_historique' %}">Ventes</a>
+            <a href="{% url 'rapport_benefices' %}">Rapports</a>
+        {% endif %}
+        <a href="{% url 'choisir_boutique' %}">Boutiques</a>
+        <a href="{% url 'deconnexion' %}">Déconnexion</a>
+    </div>
+</nav>
+{% endif %}
+
+{% if messages %}
+<div class="messages">
+    {% for message in messages %}
+        <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+    {% endfor %}
+</div>
+{% endif %}
+
+<div class="container">
+    {% block content %}{% endblock %}
+</div>
+
+</body>
+</html>

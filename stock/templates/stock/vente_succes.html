@@ -1,0 +1,76 @@
+{% extends 'stock/base.html' %}
+{% block title %}Vente validée — Reçu{% endblock %}
+
+{% block extra_css %}
+<style>
+    .recu { background:white; border-radius:16px; padding:32px; max-width:520px; margin:0 auto; box-shadow:0 4px 24px rgba(0,0,0,.1); }
+    .recu-header { text-align:center; border-bottom:2px dashed #e5e7eb; padding-bottom:20px; margin-bottom:20px; }
+    .recu-header h1 { font-size:32px; margin-bottom:4px; }
+    .recu-header p { color:#666; font-size:13px; }
+    .recu-ref { background:#f0f4ff; border-radius:10px; padding:10px 16px; text-align:center; font-size:22px; font-weight:700; color:#4361ee; letter-spacing:3px; margin-bottom:20px; }
+    .recu-ligne { display:flex; justify-content:space-between; padding:10px 0; border-bottom:1px solid #f5f5f5; font-size:14px; }
+    .recu-ligne:last-child { border-bottom:none; }
+    .recu-ligne .produit { flex:1; }
+    .recu-ligne .qty { color:#666; margin:0 16px; }
+    .recu-ligne .montant { font-weight:600; }
+    .recu-total { display:flex; justify-content:space-between; font-size:20px; font-weight:700; margin-top:16px; padding-top:16px; border-top:2px solid #1a1a2e; }
+    .recu-meta { margin-top:20px; padding-top:16px; border-top:1px dashed #e5e7eb; font-size:13px; color:#666; }
+    .recu-meta p { margin:4px 0; }
+    .benefice-badge { background:#d1fae5; color:#065f46; border-radius:10px; padding:10px 16px; text-align:center; margin-top:16px; font-size:14px; font-weight:600; }
+    .actions { display:flex; gap:12px; margin-top:24px; flex-wrap:wrap; }
+    .btn { flex:1; padding:13px; border:none; border-radius:10px; font-size:14px; cursor:pointer; font-weight:600; text-decoration:none; text-align:center; }
+    .btn-primary { background:#4361ee; color:white; }
+    .btn-print { background:#1a1a2e; color:white; }
+    .btn-danger { background:#fee2e2; color:#dc2626; }
+    @media print {
+        .actions, nav, .messages { display:none !important; }
+        body { background:white; }
+        .recu { box-shadow:none; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="recu">
+    <div class="recu-header">
+        <h1>✅</h1>
+        <h2>Vente validée !</h2>
+        <p>{{ boutique.nom }} · {{ vente.date_vente|date:"d/m/Y à H:i" }}</p>
+    </div>
+
+    <div class="recu-ref"># {{ vente.reference|stringformat:"s"|slice:":8"|upper }}</div>
+
+    {% for ligne in vente.lignes.all %}
+    <div class="recu-ligne">
+        <div class="produit">
+            <strong>{{ ligne.stock.produit }}</strong>
+            {% if ligne.imei %}<br><small style="font-family:monospace;color:#666">IMEI: {{ ligne.imei.imei }}</small>{% endif %}
+        </div>
+        <span class="qty">x{{ ligne.quantite }}</span>
+        <span class="montant">{{ ligne.montant_total|floatformat:0 }} F</span>
+    </div>
+    {% endfor %}
+
+    <div class="recu-total">
+        <span>TOTAL</span>
+        <span>{{ vente.montant_total|floatformat:0 }} F</span>
+    </div>
+
+    <div class="benefice-badge">
+        💰 Bénéfice réalisé : {{ vente.benefice_total|floatformat:0 }} F
+    </div>
+
+    <div class="recu-meta">
+        <p>💳 Paiement : <strong>{{ vente.get_mode_paiement_display }}</strong></p>
+        {% if vente.nom_client %}<p>👤 Client : <strong>{{ vente.nom_client }}</strong></p>{% endif %}
+        {% if vente.telephone_client %}<p>📞 Tél : {{ vente.telephone_client }}</p>{% endif %}
+        <p>🧑‍💼 Vendeur : {{ vente.vendeur.get_full_name|default:vente.vendeur.username }}</p>
+    </div>
+
+    <div class="actions">
+        <a href="{% url 'pos' %}" class="btn btn-primary">🛒 Nouvelle vente</a>
+        <button onclick="window.print()" class="btn btn-print">🖨️ Imprimer</button>
+        <a href="{% url 'vente_annuler' vente.id %}" class="btn btn-danger">↩ Annuler</a>
+    </div>
+</div>
+{% endblock %}

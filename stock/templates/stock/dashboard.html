@@ -1,0 +1,340 @@
+{% extends 'stock/base.html' %}
+{% block title %}Dashboard — {{ boutique.nom }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .dash-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:24px; flex-wrap:wrap; gap:12px; }
+    .dash-header h1 { font-size:24px; }
+    .dash-header p { color:#666; font-size:13px; margin-top:2px; }
+    /* Cartes stats */
+    .stats-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:14px; margin-bottom:24px; }
+    .stat-card { background:white; border-radius:14px; padding:20px; box-shadow:0 2px 14px rgba(0,0,0,.07); border-left:4px solid transparent; }
+    .stat-card.bleu { border-left-color:#4361ee; }
+    .stat-card.vert { border-left-color:#10b981; }
+    .stat-card.orange { border-left-color:#f59e0b; }
+    .stat-card.rouge { border-left-color:#ef4444; }
+    .stat-card .label { font-size:12px; color:#888; font-weight:600; text-transform:uppercase; letter-spacing:.5px; }
+    .stat-card .valeur { font-size:26px; font-weight:800; color:#1a1a2e; margin:6px 0 2px; }
+    .stat-card .sous { font-size:12px; color:#666; }
+    /* Section titre */
+    .section-title { font-size:16px; font-weight:700; margin-bottom:14px; display:flex; justify-content:space-between; align-items:center; }
+    .section-title a { font-size:13px; color:#4361ee; text-decoration:none; font-weight:600; }
+    /* Période tabs */
+    .periode-tabs { display:flex; gap:8px; margin-bottom:20px; flex-wrap:wrap; }
+    .ptab { padding:8px 18px; border-radius:8px; border:2px solid #e5e7eb; background:white; font-size:13px; font-weight:600; cursor:pointer; color:#444; }
+    .ptab.active { background:#4361ee; color:white; border-color:#4361ee; }
+    /* Grille principale */
+    .dash-grid { display:grid; grid-template-columns:1fr 320px; gap:20px; }
+    /* Graphique */
+    .chart-card { background:white; border-radius:14px; padding:24px; box-shadow:0 2px 14px rgba(0,0,0,.07); margin-bottom:20px; }
+    /* Top produits */
+    .top-item { display:flex; align-items:center; gap:12px; padding:10px 0; border-bottom:1px solid #f5f5f5; }
+    .top-item:last-child { border-bottom:none; }
+    .top-rank { width:28px; height:28px; border-radius:50%; background:#f0f4ff; color:#4361ee; font-size:12px; font-weight:700; display:flex; align-items:center; justify-content:center; }
+    .top-rank.gold { background:#fef3c7; color:#b45309; }
+    .top-info { flex:1; }
+    .top-info .nom { font-size:13px; font-weight:600; }
+    .top-info .meta { font-size:11px; color:#888; }
+    .top-qte { font-size:14px; font-weight:700; color:#4361ee; }
+    /* Alertes */
+    .alerte-card { background:white; border-radius:14px; padding:20px; box-shadow:0 2px 14px rgba(0,0,0,.07); }
+    .alerte-item { display:flex; justify-content:space-between; align-items:center; padding:10px 0; border-bottom:1px solid #f5f5f5; font-size:13px; }
+    .alerte-item:last-child { border-bottom:none; }
+    .badge-critique { background:#fee2e2; color:#dc2626; padding:2px 10px; border-radius:20px; font-size:11px; font-weight:600; }
+    /* Dernières ventes */
+    .vente-item { display:flex; justify-content:space-between; align-items:center; padding:12px 0; border-bottom:1px solid #f5f5f5; }
+    .vente-item:last-child { border-bottom:none; }
+    .vente-item .ref { font-size:12px; font-weight:700; color:#4361ee; }
+    .vente-item .heure { font-size:11px; color:#888; }
+    .vente-item .montant { font-size:14px; font-weight:700; }
+    .vente-item .ben { font-size:11px; color:#10b981; }
+    /* Marques bars */
+    .marque-bar { margin-bottom:12px; }
+    .marque-bar .mb-top { display:flex; justify-content:space-between; font-size:13px; margin-bottom:4px; }
+    .marque-bar .bar { height:8px; background:#f0f0f0; border-radius:4px; overflow:hidden; }
+    .marque-bar .bar-fill { height:100%; background:#4361ee; border-radius:4px; transition:width .5s; }
+    /* Raccourcis */
+    .shortcuts { display:grid; grid-template-columns:repeat(2,1fr); gap:10px; margin-bottom:20px; }
+    .shortcut { background:white; border-radius:12px; padding:16px; text-align:center; box-shadow:0 2px 10px rgba(0,0,0,.06); text-decoration:none; color:#1a1a2e; transition:all .2s; }
+    .shortcut:hover { transform:translateY(-2px); border:2px solid #4361ee; }
+    .shortcut .icon { font-size:28px; }
+    .shortcut .label { font-size:12px; font-weight:600; margin-top:6px; }
+    @media(max-width:900px){ .dash-grid { grid-template-columns:1fr; } }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="dash-header">
+    <div>
+        <h1>📊 Dashboard</h1>
+        <p>{{ boutique.nom }} · {{ aujourd_hui|date:"l d F Y" }}</p>
+    </div>
+    <div style="display:flex; gap:8px; flex-wrap:wrap;">
+        <a href="{% url 'rapport_benefices' %}" style="padding:9px 18px; background:#4361ee; color:white; border-radius:10px; text-decoration:none; font-size:13px; font-weight:600;">📈 Rapports</a>
+        <a href="{% url 'rapport_commandes' %}" style="padding:9px 18px; background:#10b981; color:white; border-radius:10px; text-decoration:none; font-size:13px; font-weight:600;">📦 Commandes</a>
+    </div>
+</div>
+
+<!-- Période selector -->
+<div class="periode-tabs">
+    <button class="ptab" id="tab-jour" onclick="afficherPeriode('jour')">Aujourd'hui</button>
+    <button class="ptab" id="tab-semaine" onclick="afficherPeriode('semaine')">Cette semaine</button>
+    <button class="ptab active" id="tab-mois" onclick="afficherPeriode('mois')">Ce mois</button>
+</div>
+
+<!-- Stats financières -->
+<div class="stats-grid" id="stats-jour" style="display:none">
+    <div class="stat-card bleu">
+        <div class="label">Ventes aujourd'hui</div>
+        <div class="valeur">{{ stats_jour.nb }}</div>
+        <div class="sous">transactions</div>
+    </div>
+    <div class="stat-card vert">
+        <div class="label">Chiffre d'affaires</div>
+        <div class="valeur">{{ stats_jour.ca|floatformat:0 }}</div>
+        <div class="sous">FCFA</div>
+    </div>
+    <div class="stat-card orange">
+        <div class="label">Bénéfice net</div>
+        <div class="valeur">{{ stats_jour.benefice|floatformat:0 }}</div>
+        <div class="sous">FCFA</div>
+    </div>
+</div>
+
+<div class="stats-grid" id="stats-semaine" style="display:none">
+    <div class="stat-card bleu">
+        <div class="label">Ventes semaine</div>
+        <div class="valeur">{{ stats_semaine.nb }}</div>
+        <div class="sous">transactions</div>
+    </div>
+    <div class="stat-card vert">
+        <div class="label">Chiffre d'affaires</div>
+        <div class="valeur">{{ stats_semaine.ca|floatformat:0 }}</div>
+        <div class="sous">FCFA</div>
+    </div>
+    <div class="stat-card orange">
+        <div class="label">Bénéfice net</div>
+        <div class="valeur">{{ stats_semaine.benefice|floatformat:0 }}</div>
+        <div class="sous">FCFA</div>
+    </div>
+</div>
+
+<div class="stats-grid" id="stats-mois">
+    <div class="stat-card bleu">
+        <div class="label">Ventes ce mois</div>
+        <div class="valeur">{{ stats_mois.nb }}</div>
+        <div class="sous">transactions</div>
+    </div>
+    <div class="stat-card vert">
+        <div class="label">Chiffre d'affaires</div>
+        <div class="valeur">{{ stats_mois.ca|floatformat:0 }}</div>
+        <div class="sous">FCFA</div>
+    </div>
+    <div class="stat-card orange">
+        <div class="label">Bénéfice net</div>
+        <div class="valeur">{{ stats_mois.benefice|floatformat:0 }}</div>
+        <div class="sous">FCFA</div>
+    </div>
+    <div class="stat-card rouge">
+        <div class="label">Alertes stock</div>
+        <div class="valeur">{{ nb_alertes }}</div>
+        <div class="sous">produits critiques</div>
+    </div>
+</div>
+
+<!-- Stats stock -->
+<div class="stats-grid" style="margin-bottom:28px;">
+    <div class="stat-card bleu">
+        <div class="label">Références</div>
+        <div class="valeur">{{ total_refs }}</div>
+        <div class="sous">produits catalogue</div>
+    </div>
+    <div class="stat-card vert">
+        <div class="label">Articles en stock</div>
+        <div class="valeur">{{ total_articles }}</div>
+        <div class="sous">unités</div>
+    </div>
+    <div class="stat-card orange">
+        <div class="label">Valeur du stock</div>
+        <div class="valeur">{{ valeur_stock|floatformat:0 }}</div>
+        <div class="sous">FCFA (prix achat)</div>
+    </div>
+</div>
+
+<div class="dash-grid">
+    <!-- Colonne gauche -->
+    <div>
+        <!-- Graphique 30 jours -->
+        <div class="chart-card">
+            <div class="section-title">
+                📈 Évolution 30 derniers jours
+                <a href="{% url 'rapport_benefices' %}">Voir rapport →</a>
+            </div>
+            <canvas id="chartVentes" height="120"></canvas>
+        </div>
+
+        <!-- Top produits -->
+        <div class="chart-card">
+            <div class="section-title">🏆 Top produits ce mois</div>
+            {% if top_produits %}
+                {% for p in top_produits %}
+                <div class="top-item">
+                    <div class="top-rank {% if forloop.first %}gold{% endif %}">{{ forloop.counter }}</div>
+                    <div class="top-info">
+                        <div class="nom">{{ p.stock__produit__marque__nom }} {{ p.stock__produit__nom }}</div>
+                        <div class="meta">CA: {{ p.total_ca|floatformat:0 }} F · Bén: {{ p.total_benefice|floatformat:0 }} F</div>
+                    </div>
+                    <div class="top-qte">{{ p.total_qte }} vdus</div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <p style="color:#888; text-align:center; padding:20px;">Aucune vente ce mois.</p>
+            {% endif %}
+        </div>
+
+        <!-- Dernières ventes -->
+        <div class="chart-card">
+            <div class="section-title">
+                🕐 Dernières ventes
+                <a href="{% url 'vente_historique' %}">Voir tout →</a>
+            </div>
+            {% if dernieres_ventes %}
+                {% for vente in dernieres_ventes %}
+                <div class="vente-item">
+                    <div>
+                        <div class="ref">#{{ vente.reference|stringformat:"s"|slice:":8"|upper }}</div>
+                        <div class="heure">{{ vente.date_vente|date:"d/m à H:i" }} · {{ vente.vendeur.username }}</div>
+                    </div>
+                    <div style="text-align:right;">
+                        <div class="montant">{{ vente.montant_total|floatformat:0 }} F</div>
+                        <div class="ben">+{{ vente.benefice_total|floatformat:0 }} F</div>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <p style="color:#888; text-align:center; padding:20px;">Aucune vente enregistrée.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Colonne droite -->
+    <div>
+        <!-- Raccourcis -->
+        <div class="shortcuts">
+            <a href="{% url 'pos' %}" class="shortcut">
+                <div class="icon">🛒</div>
+                <div class="label">Caisse</div>
+            </a>
+            <a href="{% url 'stock_ajouter' %}" class="shortcut">
+                <div class="icon">➕</div>
+                <div class="label">Ajouter stock</div>
+            </a>
+            <a href="{% url 'rapport_benefices' %}" class="shortcut">
+                <div class="icon">📈</div>
+                <div class="label">Bénéfices</div>
+            </a>
+            <a href="{% url 'rapport_commandes' %}" class="shortcut">
+                <div class="icon">📦</div>
+                <div class="label">À commander</div>
+            </a>
+        </div>
+
+        <!-- Top marques -->
+        <div class="alerte-card" style="margin-bottom:16px;">
+            <div class="section-title">📊 Top marques ce mois</div>
+            {% if top_marques %}
+                {% with max_qte=top_marques.0.total_qte %}
+                {% for m in top_marques %}
+                <div class="marque-bar">
+                    <div class="mb-top">
+                        <span>{{ m.stock__produit__marque__nom }}</span>
+                        <span style="font-weight:600;">{{ m.total_qte }} vendus</span>
+                    </div>
+                    <div class="bar">
+                        <div class="bar-fill" style="width:{% if max_qte %}{% widthratio m.total_qte max_qte 100 %}%{% else %}0%{% endif %}"></div>
+                    </div>
+                </div>
+                {% endfor %}
+                {% endwith %}
+            {% else %}
+                <p style="color:#888; font-size:13px; text-align:center; padding:10px;">Aucune donnée.</p>
+            {% endif %}
+        </div>
+
+        <!-- Alertes stock -->
+        {% if nb_alertes %}
+        <div class="alerte-card">
+            <div class="section-title">
+                ⚠️ Alertes stock
+                <a href="{% url 'rapport_commandes' %}">Commander →</a>
+            </div>
+            {% for stock in stocks %}
+                {% if stock.est_sous_seuil %}
+                <div class="alerte-item">
+                    <div>
+                        <div style="font-size:13px; font-weight:600;">{{ stock.produit }}</div>
+                        <div style="font-size:11px; color:#888;">Seuil : {{ stock.produit.seuil_alerte }}</div>
+                    </div>
+                    <span class="badge-critique">{{ stock.quantite }} restant</span>
+                </div>
+                {% endif %}
+            {% endfor %}
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Chart.js -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<script>
+const ctx = document.getElementById('chartVentes').getContext('2d');
+new Chart(ctx, {
+    type: 'bar',
+    data: {
+        labels: {{ graph_labels|safe }},
+        datasets: [
+            {
+                label: 'CA (F)',
+                data: {{ graph_ca|safe }},
+                backgroundColor: 'rgba(67,97,238,0.15)',
+                borderColor: '#4361ee',
+                borderWidth: 2,
+                borderRadius: 4,
+            },
+            {
+                label: 'Bénéfice (F)',
+                data: {{ graph_benefice|safe }},
+                backgroundColor: 'rgba(16,185,129,0.15)',
+                borderColor: '#10b981',
+                borderWidth: 2,
+                borderRadius: 4,
+                type: 'line',
+                tension: 0.4,
+                pointRadius: 3,
+            }
+        ]
+    },
+    options: {
+        responsive: true,
+        plugins: { legend: { position: 'bottom' } },
+        scales: {
+            y: {
+                beginAtZero: true,
+                ticks: {
+                    callback: v => v.toLocaleString('fr-FR') + ' F'
+                }
+            }
+        }
+    }
+});
+
+function afficherPeriode(p) {
+    ['jour','semaine','mois'].forEach(x => {
+        document.getElementById('stats-'+x).style.display = 'none';
+        document.getElementById('tab-'+x).classList.remove('active');
+    });
+    document.getElementById('stats-'+p).style.display = 'grid';
+    document.getElementById('tab-'+p).classList.add('active');
+}
+</script>
+{% endblock %}

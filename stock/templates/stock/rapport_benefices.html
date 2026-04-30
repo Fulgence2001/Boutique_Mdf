@@ -1,0 +1,168 @@
+{% extends 'stock/base.html' %}
+{% block title %}Rapport Bénéfices{% endblock %}
+
+{% block extra_css %}
+<style>
+    .page-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:24px; flex-wrap:wrap; gap:12px; }
+    .periode-bar { display:flex; gap:8px; margin-bottom:20px; flex-wrap:wrap; }
+    .pbtn { padding:9px 20px; border-radius:8px; border:2px solid #e5e7eb; background:white; font-size:13px; font-weight:600; cursor:pointer; text-decoration:none; color:#444; }
+    .pbtn.active { background:#4361ee; color:white; border-color:#4361ee; }
+    .stats-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(180px,1fr)); gap:14px; margin-bottom:24px; }
+    .stat-card { background:white; border-radius:14px; padding:20px; box-shadow:0 2px 14px rgba(0,0,0,.07); text-align:center; }
+    .stat-card .val { font-size:26px; font-weight:800; color:#4361ee; }
+    .stat-card .val.vert { color:#10b981; }
+    .stat-card .val.orange { color:#f59e0b; }
+    .stat-card .lbl { font-size:12px; color:#666; margin-top:4px; }
+    .card { background:white; border-radius:14px; padding:24px; box-shadow:0 2px 14px rgba(0,0,0,.07); margin-bottom:20px; }
+    .card h2 { font-size:16px; font-weight:700; margin-bottom:16px; }
+    table { width:100%; border-collapse:collapse; font-size:13px; }
+    th { text-align:left; padding:10px 14px; background:#f8fafc; color:#666; font-weight:600; font-size:12px; }
+    td { padding:11px 14px; border-bottom:1px solid #f5f5f5; }
+    tr:last-child td { border-bottom:none; }
+    .marge-bar { height:6px; background:#f0f0f0; border-radius:3px; margin-top:4px; }
+    .marge-fill { height:100%; border-radius:3px; background:#10b981; }
+    .custom-form { display:flex; gap:10px; align-items:center; flex-wrap:wrap; background:white; padding:16px; border-radius:12px; margin-bottom:16px; box-shadow:0 2px 10px rgba(0,0,0,.06); }
+    .custom-form input { padding:9px 13px; border:2px solid #e5e7eb; border-radius:8px; font-size:13px; }
+    .custom-form input:focus { outline:none; border-color:#4361ee; }
+    .btn { padding:9px 20px; border:none; border-radius:8px; font-size:13px; font-weight:600; cursor:pointer; }
+    .btn-primary { background:#4361ee; color:white; }
+    @media print { .page-header a, .periode-bar, .custom-form { display:none; } }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1>📈 Rapport Bénéfices</h1>
+        <p style="color:#666; font-size:13px;">{{ boutique.nom }} · {{ titre }}</p>
+    </div>
+    <div style="display:flex; gap:8px;">
+        <button onclick="window.print()" class="btn btn-primary">🖨️ Imprimer</button>
+        <a href="{% url 'dashboard' %}" style="padding:9px 18px; background:#e5e7eb; color:#444; border-radius:8px; text-decoration:none; font-size:13px; font-weight:600;">← Dashboard</a>
+    </div>
+</div>
+
+<!-- Sélecteur de période -->
+<div class="periode-bar">
+    <a href="?periode=jour" class="pbtn {% if periode == 'jour' %}active{% endif %}">Aujourd'hui</a>
+    <a href="?periode=semaine" class="pbtn {% if periode == 'semaine' %}active{% endif %}">Cette semaine</a>
+    <a href="?periode=mois" class="pbtn {% if periode == 'mois' %}active{% endif %}">Ce mois</a>
+    <a href="?periode=personnalise" class="pbtn {% if periode == 'personnalise' %}active{% endif %}">Personnalisé</a>
+</div>
+
+{% if periode == 'personnalise' %}
+<form method="get" class="custom-form">
+    <input type="hidden" name="periode" value="personnalise">
+    <label style="font-size:13px; font-weight:600;">Du</label>
+    <input type="date" name="debut" value="{{ debut|date:'Y-m-d' }}">
+    <label style="font-size:13px; font-weight:600;">au</label>
+    <input type="date" name="fin" value="{{ fin|date:'Y-m-d' }}">
+    <button type="submit" class="btn btn-primary">Appliquer</button>
+</form>
+{% endif %}
+
+<!-- KPIs -->
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="val">{{ nb_ventes }}</div>
+        <div class="lbl">Ventes</div>
+    </div>
+    <div class="stat-card">
+        <div class="val">{{ ca_total|floatformat:0 }}</div>
+        <div class="lbl">CA total (F)</div>
+    </div>
+    <div class="stat-card">
+        <div class="val vert">{{ benefice_total|floatformat:0 }}</div>
+        <div class="lbl">Bénéfice net (F)</div>
+    </div>
+    <div class="stat-card">
+        <div class="val orange">{{ marge|floatformat:1 }}%</div>
+        <div class="lbl">Marge moyenne</div>
+    </div>
+</div>
+
+<!-- Graphique évolution -->
+{% if graph_labels != '[]' %}
+<div class="card">
+    <h2>📊 Évolution CA et Bénéfice</h2>
+    <canvas id="chartRapport" height="100"></canvas>
+</div>
+{% endif %}
+
+<!-- Détail par produit -->
+<div class="card">
+    <h2>🏷️ Détail par produit</h2>
+    {% if par_produit %}
+    <table>
+        <thead>
+            <tr>
+                <th>Produit</th>
+                <th>Qté vendue</th>
+                <th>CA (F)</th>
+                <th>Coût achat (F)</th>
+                <th>Bénéfice (F)</th>
+                <th>Marge</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for p in par_produit %}
+            <tr>
+                <td>
+                    <strong>{{ p.stock__produit__marque__nom }} {{ p.stock__produit__nom }}</strong>
+                </td>
+                <td>{{ p.qte }}</td>
+                <td>{{ p.ca|floatformat:0 }}</td>
+                <td>{{ p.achat|floatformat:0 }}</td>
+                <td style="color:#10b981; font-weight:700;">{{ p.benefice|floatformat:0 }}</td>
+                <td>
+                    {% if p.ca %}
+                        {% widthratio p.benefice p.ca 100 %}%
+                        <div class="marge-bar"><div class="marge-fill" style="width:{% widthratio p.benefice p.ca 100 %}%"></div></div>
+                    {% else %}—{% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p style="color:#888; text-align:center; padding:30px;">Aucune vente sur cette période.</p>
+    {% endif %}
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<script>
+{% if graph_labels != '[]' %}
+new Chart(document.getElementById('chartRapport').getContext('2d'), {
+    type: 'bar',
+    data: {
+        labels: {{ graph_labels|safe }},
+        datasets: [
+            {
+                label: 'CA (F)',
+                data: {{ graph_ca|safe }},
+                backgroundColor: 'rgba(67,97,238,0.2)',
+                borderColor: '#4361ee',
+                borderWidth: 2,
+                borderRadius: 4,
+            },
+            {
+                label: 'Bénéfice (F)',
+                data: {{ graph_benefice|safe }},
+                type: 'line',
+                borderColor: '#10b981',
+                backgroundColor: 'rgba(16,185,129,0.1)',
+                tension: 0.4,
+                fill: true,
+                pointRadius: 4,
+            }
+        ]
+    },
+    options: {
+        responsive: true,
+        plugins: { legend: { position: 'bottom' } },
+        scales: { y: { beginAtZero: true, ticks: { callback: v => v.toLocaleString('fr-FR') + ' F' } } }
+    }
+});
+{% endif %}
+</script>
+{% endblock %}

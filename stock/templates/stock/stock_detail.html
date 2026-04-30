@@ -1,0 +1,148 @@
+{% extends 'stock/base.html' %}
+{% block title %}{{ stock.produit }} — Détail{% endblock %}
+
+{% block extra_css %}
+<style>
+    .header-produit { background:white; border-radius:14px; padding:24px; margin-bottom:20px; display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:16px; box-shadow:0 4px 16px rgba(0,0,0,.07); }
+    .header-produit h1 { font-size:22px; margin-bottom:4px; }
+    .info-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(160px,1fr)); gap:12px; margin-bottom:20px; }
+    .info-card { background:white; border-radius:12px; padding:16px; text-align:center; box-shadow:0 2px 10px rgba(0,0,0,.06); }
+    .info-card .val { font-size:24px; font-weight:700; color:#4361ee; }
+    .info-card .val.rouge { color:#ef4444; }
+    .info-card .val.vert { color:#10b981; }
+    .info-card .lbl { font-size:12px; color:#666; margin-top:4px; }
+    .card { background:white; border-radius:14px; padding:24px; box-shadow:0 4px 16px rgba(0,0,0,.07); margin-bottom:20px; }
+    .card h2 { font-size:16px; margin-bottom:16px; padding-bottom:10px; border-bottom:2px solid #f0f0f0; }
+    .form-row { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+    .form-group { margin-bottom:14px; }
+    .form-group label { display:block; font-size:12px; font-weight:600; color:#666; margin-bottom:5px; }
+    .form-group input { width:100%; padding:10px 13px; border:2px solid #e5e7eb; border-radius:8px; font-size:14px; }
+    .form-group input:focus { outline:none; border-color:#4361ee; }
+    .btn { padding:9px 20px; border:none; border-radius:8px; font-size:13px; cursor:pointer; font-weight:600; text-decoration:none; display:inline-block; }
+    .btn-primary { background:#4361ee; color:white; }
+    .btn-success { background:#10b981; color:white; }
+    .btn-danger { background:#ef4444; color:white; }
+    .btn-sm { padding:5px 12px; font-size:12px; }
+    table { width:100%; border-collapse:collapse; font-size:14px; }
+    th { text-align:left; padding:10px 14px; background:#f8fafc; color:#666; font-size:12px; font-weight:600; }
+    td { padding:10px 14px; border-bottom:1px solid #f5f5f5; }
+    .badge { padding:3px 10px; border-radius:20px; font-size:12px; font-weight:600; }
+    .badge-ok { background:#d1fae5; color:#065f46; }
+    .badge-vendu { background:#e0e7ff; color:#3730a3; }
+    .badge-defect { background:#fee2e2; color:#991b1b; }
+    .alerte-banner { background:#fff3cd; border:2px solid #ffc107; border-radius:10px; padding:12px 16px; margin-bottom:16px; font-size:14px; }
+</style>
+{% endblock %}
+
+{% block content %}
+<a href="{% url 'stock_liste' %}" style="color:#666; font-size:14px; text-decoration:none;">← Retour au stock</a>
+
+<div class="header-produit" style="margin-top:16px">
+    <div>
+        <h1>{{ stock.produit }}</h1>
+        <p style="color:#666; font-size:14px">{{ stock.produit.categorie }} · {{ stock.produit.get_type_produit_display }}</p>
+    </div>
+    <div style="display:flex; gap:10px; flex-wrap:wrap;">
+        <a href="{% url 'imei_ajouter' stock.pk %}" class="btn btn-success">+ Ajouter IMEI</a>
+        <a href="{% url 'stock_supprimer' stock.pk %}" class="btn btn-danger">🗑 Supprimer</a>
+    </div>
+</div>
+
+{% if stock.est_sous_seuil %}
+<div class="alerte-banner">
+    ⚠️ <strong>Stock critique !</strong> Il ne reste que <strong>{{ stock.quantite }}</strong> unité(s) (seuil : {{ stock.produit.seuil_alerte }}).
+</div>
+{% endif %}
+
+<!-- Indicateurs -->
+<div class="info-grid">
+    <div class="info-card">
+        <div class="val {% if stock.est_sous_seuil %}rouge{% endif %}">{{ stock.quantite }}</div>
+        <div class="lbl">En stock</div>
+    </div>
+    <div class="info-card">
+        <div class="val">{{ stock.prix_achat|floatformat:0 }}</div>
+        <div class="lbl">Prix achat (F)</div>
+    </div>
+    <div class="info-card">
+        <div class="val vert">{{ stock.prix_vente_suggere|floatformat:0 }}</div>
+        <div class="lbl">Prix vente conseillé (F)</div>
+    </div>
+    <div class="info-card">
+        <div class="val vert">{{ stock.valeur_stock|floatformat:0 }}</div>
+        <div class="lbl">Valeur totale stock (F)</div>
+    </div>
+</div>
+
+<!-- Arrivage rapide -->
+<div class="card">
+    <h2>📥 Enregistrer un arrivage</h2>
+    <form method="post">
+        {% csrf_token %}
+        <div class="form-row">
+            <div class="form-group">
+                <label>Quantité reçue *</label>
+                {{ arrivage_form.quantite_ajoutee }}
+            </div>
+            <div class="form-group">
+                <label>Date d'arrivage *</label>
+                {{ arrivage_form.date_arrivage }}
+            </div>
+        </div>
+        <div class="form-row">
+            <div class="form-group">
+                <label>Nouveau prix d'achat (FCFA) *</label>
+                {{ arrivage_form.nouveau_prix_achat }}
+            </div>
+            <div class="form-group">
+                <label>Nouveau prix vente conseillé (FCFA) *</label>
+                {{ arrivage_form.nouveau_prix_vente }}
+            </div>
+        </div>
+        <button type="submit" class="btn btn-primary">✅ Enregistrer l'arrivage</button>
+    </form>
+</div>
+
+<!-- Seuil d'alerte -->
+<div class="card">
+    <h2>⚠️ Seuil d'alerte</h2>
+    <form method="post" action="{% url 'stock_modifier_seuil' stock.pk %}" style="display:flex; gap:12px; align-items:center;">
+        {% csrf_token %}
+        <input type="number" name="seuil" value="{{ stock.produit.seuil_alerte }}" min="1" style="width:100px; padding:10px; border:2px solid #e5e7eb; border-radius:8px;">
+        <button type="submit" class="btn" style="background:#f59e0b; color:white;">Mettre à jour</button>
+    </form>
+</div>
+
+<!-- Liste IMEI -->
+{% if imeis %}
+<div class="card">
+    <h2>📱 IMEI enregistrés ({{ imeis.count }})</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>IMEI</th>
+                <th>Couleur</th>
+                <th>Stockage</th>
+                <th>Statut</th>
+                <th>Entrée</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for imei in imeis %}
+            <tr>
+                <td><code>{{ imei.imei }}</code></td>
+                <td>{{ imei.couleur|default:"—" }}</td>
+                <td>{{ imei.stockage|default:"—" }}</td>
+                <td>
+                    {% if imei.statut == 'disponible' %}<span class="badge badge-ok">Disponible</span>
+                    {% elif imei.statut == 'vendu' %}<span class="badge badge-vendu">Vendu</span>
+                    {% else %}<span class="badge badge-defect">{{ imei.get_statut_display }}</span>{% endif %}
+                </td>
+                <td>{{ imei.date_entree|date:"d/m/Y" }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endif %}
+{% endblock %}
