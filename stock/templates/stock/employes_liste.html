@@ -1,0 +1,76 @@
+{% extends 'stock/base.html' %}
+{% block title %}Mes Employés{% endblock %}
+
+{% block extra_css %}
+<style>
+    .page-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:24px; flex-wrap:wrap; gap:12px; }
+    .btn { padding:10px 20px; border:none; border-radius:10px; font-size:14px; font-weight:600; cursor:pointer; text-decoration:none; display:inline-block; }
+    .btn-primary { background:#4361ee; color:white; }
+    .card { background:white; border-radius:14px; padding:24px; box-shadow:0 2px 14px rgba(0,0,0,.07); }
+    table { width:100%; border-collapse:collapse; font-size:14px; }
+    th { text-align:left; padding:11px 16px; background:#f8fafc; color:#666; font-size:12px; font-weight:600; }
+    td { padding:13px 16px; border-bottom:1px solid #f8f8f8; vertical-align:middle; }
+    tr:last-child td { border-bottom:none; }
+    tr:hover td { background:#fafbff; }
+    .avatar { width:36px; height:36px; border-radius:50%; background:#4361ee; color:white; display:flex; align-items:center; justify-content:center; font-size:14px; font-weight:700; }
+    .badge { padding:3px 10px; border-radius:20px; font-size:12px; font-weight:600; }
+    .badge-employe { background:#e0e7ff; color:#3730a3; }
+    .empty { text-align:center; padding:60px; color:#888; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1>👥 Mes Employés</h1>
+        <p style="color:#666; font-size:13px;">{{ employes.count }} employé(s) enregistré(s)</p>
+    </div>
+    <a href="{% url 'employe_creer' %}" class="btn btn-primary">+ Ajouter un employé</a>
+</div>
+
+<div class="card">
+    {% if employes %}
+    <table>
+        <thead>
+            <tr>
+                <th>Employé</th>
+                <th>Nom complet</th>
+                <th>Boutique assignée</th>
+                <th>Téléphone</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for emp in employes %}
+            <tr>
+                <td>
+                    <div style="display:flex; align-items:center; gap:10px;">
+                        <div class="avatar">{{ emp.user.username|first|upper }}</div>
+                        <strong>{{ emp.user.username }}</strong>
+                    </div>
+                </td>
+                <td>{{ emp.user.get_full_name|default:"—" }}</td>
+                <td>
+                    {% if emp.boutique %}
+                        <span class="badge badge-employe">🏪 {{ emp.boutique.nom }}</span>
+                    {% else %}
+                        <span style="color:#aaa; font-size:13px;">Non assigné</span>
+                    {% endif %}
+                </td>
+                <td>{{ emp.telephone|default:"—" }}</td>
+                <td>
+                    <a href="{% url 'employe_detail' emp.id %}" class="btn" style="background:#f0f4ff; color:#4361ee; padding:7px 16px; font-size:13px;">Gérer</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <div class="empty">
+        <p style="font-size:40px">👤</p>
+        <p>Aucun employé pour le moment.</p>
+        <a href="{% url 'employe_creer' %}" class="btn btn-primary" style="margin-top:16px;">+ Créer le premier employé</a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

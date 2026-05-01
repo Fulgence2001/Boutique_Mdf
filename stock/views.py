@@ -4,6 +4,38 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from .forms import ConnexionForm, InscriptionForm
 from .models import Boutique, ProfilEmploye
+from functools import wraps
+from django.core.exceptions import PermissionDenied
+
+def proprietaire_requis(view_func):
+    """Bloque l'accès aux employés — réservé aux propriétaires."""
+    @wraps(view_func)
+    def wrapper(request, *args, **kwargs):
+        try:
+            profil = request.user.profil
+        except Exception:
+            raise PermissionDenied
+        if not profil.est_proprietaire:
+            messages.error(request, "Accès réservé au propriétaire.")
+            return redirect('pos')  # L'employé atterrit sur la caisse
+        return view_func(request, *args, **kwargs)
+    return wrapper
+
+
+def employe_sa_boutique(view_func):
+    """S'assure que l'employé ne peut accéder qu'à sa boutique assignée."""
+    @wraps(view_func)
+    def wrapper(request, *args, **kwargs):
+        try:
+            profil = request.user.profil
+        except Exception:
+            return redirect('connexion')
+        # Si employé sans boutique → bloqué
+        if not profil.est_proprietaire and not profil.boutique:
+            messages.error(request, "Aucune boutique ne vous est assignée. Contactez votre responsable.")
+            return redirect('connexion')
+        return view_func(request, *args, **kwargs)
+    return wrapper
 
 
 # ── Connexion ──────────────────────────────────────────
@@ -48,39 +80,39 @@ def vue_deconnexion(request):
 @login_required
 def choisir_boutique(request):
     user = request.user
-    
-    # Crée le profil s'il n'existe pas (cas superuser ou ancien compte)
-    profil, created = ProfilEmploye.objects.get_or_create(user=user)
-    if created or not profil.role:
+    profil, _ = ProfilEmploye.objects.get_or_create(user=user)
+    if not profil.role:
         profil.role = 'proprietaire'
         profil.save()
 
-    # Le propriétaire voit toutes ses boutiques
     if profil.est_proprietaire:
         boutiques = Boutique.objects.filter(proprietaire=user, est_active=True)
     else:
-        # L'employé ne voit que sa boutique assignée
-        boutiques = Boutique.objects.filter(
-            id=profil.boutique_id, est_active=True
-        ) if profil.boutique else Boutique.objects.none()
+        # L'employé est directement redirigé sur sa boutique
+        if profil.boutique:
+            request.session['boutique_active_id'] = profil.boutique.id
+            request.session['boutique_active_nom'] = profil.boutique.nom
+            return redirect('pos')  # ← Employé → directement à la caisse
+        else:
+            messages.error(request, "Aucune boutique assignée. Contactez votre responsable.")
+            return redirect('deconnexion')
 
     if request.method == 'POST':
         boutique_id = request.POST.get('boutique_id')
-        # Vérifie que l'utilisateur a le droit d'accéder à cette boutique
         boutique = boutiques.filter(id=boutique_id).first()
         if boutique:
             request.session['boutique_active_id'] = boutique.id
             request.session['boutique_active_nom'] = boutique.nom
-            messages.success(request, f"Boutique « {boutique.nom} » sélectionnée.")
-            return redirect('dashboard')
+            return redirect('dashboard')  # ← Propriétaire → dashboard
         else:
-            messages.error(request, "Accès non autorisé à cette boutique.")
+            messages.error(request, "Accès non autorisé.")
 
     return render(request, 'stock/choisir_boutique.html', {'boutiques': boutiques})
 
 
 # ── Créer une boutique ─────────────────────────────────
 @login_required
+@proprietaire_requis
 def creer_boutique(request):
     if request.method == 'POST':
         nom = request.POST.get('nom', '').strip()
@@ -112,6 +144,7 @@ from django.db.models.functions import TruncDay, TruncWeek, TruncMonth
 
 # ── Dashboard principal ────────────────────────────────
 @login_required
+@proprietaire_requis
 def dashboard(request):
     boutique = get_boutique_active(request)
     if not boutique:
@@ -232,6 +265,7 @@ def dashboard(request):
 
 # ── Rapport Bénéfices ──────────────────────────────────
 @login_required
+@proprietaire_requis
 def rapport_benefices(request):
     boutique = get_boutique_active(request)
     if not boutique:
@@ -328,6 +362,7 @@ def rapport_benefices(request):
 
 # ── Rapport Commandes (produits à racheter) ────────────
 @login_required
+@proprietaire_requis
 def rapport_commandes(request):
     boutique = get_boutique_active(request)
     if not boutique:
@@ -400,6 +435,7 @@ def get_boutique_active(request):
 
 # ── Liste du Stock ─────────────────────────────────────
 @login_required
+@employe_sa_boutique
 def stock_liste(request):
     boutique = get_boutique_active(request)
     if not boutique:
@@ -451,6 +487,7 @@ def stock_liste(request):
 
 # ── Ajouter Produit + Stock ────────────────────────────
 @login_required
+@employe_sa_boutique
 def stock_ajouter(request):
     boutique = get_boutique_active(request)
     if not boutique:
@@ -608,6 +645,7 @@ def stock_modifier_seuil(request, pk):
 
 # ── Supprimer un stock ─────────────────────────────────
 @login_required
+@proprietaire_requis
 def stock_supprimer(request, pk):
     boutique = get_boutique_active(request)
     stock = get_object_or_404(StockBoutique, pk=pk, boutique=boutique)
@@ -627,6 +665,7 @@ from decimal import Decimal
 
 # ── POS : Interface de vente ───────────────────────────
 @login_required
+@employe_sa_boutique
 def pos(request):
     boutique = get_boutique_active(request)
     if not boutique:
@@ -833,3 +872,124 @@ def vente_annuler(request, vente_id):
         return redirect('vente_historique')
 
     return render(request, 'stock/vente_annuler_confirm.html', {'vente': vente})
+
+
+from django.contrib.auth.models import User
+
+
+# ── Liste des employés ─────────────────────────────────
+@login_required
+@proprietaire_requis
+def employes_liste(request):
+    user = request.user
+    # Toutes les boutiques du propriétaire
+    boutiques = Boutique.objects.filter(proprietaire=user)
+    # Tous les employés de ces boutiques
+    employes = ProfilEmploye.objects.filter(
+        boutique__in=boutiques,
+        role='employe'
+    ).select_related('user', 'boutique').order_by('boutique__nom', 'user__username')
+
+    return render(request, 'stock/employes_liste.html', {
+        'employes': employes,
+        'boutiques': boutiques,
+    })
+
+
+# ── Créer un employé ───────────────────────────────────
+@login_required
+@proprietaire_requis
+def employe_creer(request):
+    boutiques = Boutique.objects.filter(proprietaire=request.user)
+
+    if request.method == 'POST':
+        username = request.POST.get('username', '').strip()
+        password = request.POST.get('password', '').strip()
+        prenom = request.POST.get('prenom', '').strip()
+        nom = request.POST.get('nom', '').strip()
+        boutique_id = request.POST.get('boutique_id')
+        telephone = request.POST.get('telephone', '').strip()
+
+        # Validations
+        if not username or not password or not boutique_id:
+            messages.error(request, "Nom d'utilisateur, mot de passe et boutique sont obligatoires.")
+            return render(request, 'stock/employe_creer.html', {'boutiques': boutiques})
+
+        if User.objects.filter(username=username).exists():
+            messages.error(request, f"Le nom d'utilisateur « {username} » est déjà pris.")
+            return render(request, 'stock/employe_creer.html', {'boutiques': boutiques})
+
+        boutique = boutiques.filter(id=boutique_id).first()
+        if not boutique:
+            messages.error(request, "Boutique invalide.")
+            return render(request, 'stock/employe_creer.html', {'boutiques': boutiques})
+
+        # Création User
+        employe_user = User.objects.create_user(
+            username=username,
+            password=password,
+            first_name=prenom,
+            last_name=nom,
+        )
+
+        # Profil employé (le signal l'a créé, on le met à jour)
+        profil = employe_user.profil
+        profil.role = 'employe'
+        profil.boutique = boutique
+        profil.telephone = telephone
+        profil.save()
+
+        messages.success(request, f"Employé « {username} » créé et assigné à {boutique.nom} !")
+        return redirect('employes_liste')
+
+    return render(request, 'stock/employe_creer.html', {'boutiques': boutiques})
+
+
+# ── Détail / modifier un employé ───────────────────────
+@login_required
+@proprietaire_requis
+def employe_detail(request, employe_id):
+    boutiques = Boutique.objects.filter(proprietaire=request.user)
+    profil = get_object_or_404(
+        ProfilEmploye,
+        id=employe_id,
+        boutique__in=boutiques,
+        role='employe'
+    )
+
+    if request.method == 'POST':
+        action = request.POST.get('action')
+
+        if action == 'modifier':
+            boutique_id = request.POST.get('boutique_id')
+            boutique = boutiques.filter(id=boutique_id).first()
+            if boutique:
+                profil.boutique = boutique
+                profil.telephone = request.POST.get('telephone', '').strip()
+                profil.save()
+                profil.user.first_name = request.POST.get('prenom', '').strip()
+                profil.user.last_name = request.POST.get('nom', '').strip()
+                profil.user.save()
+                messages.success(request, "Employé mis à jour.")
+
+        elif action == 'reset_password':
+            nouveau_mdp = request.POST.get('nouveau_mdp', '').strip()
+            if len(nouveau_mdp) >= 4:
+                profil.user.set_password(nouveau_mdp)
+                profil.user.save()
+                messages.success(request, f"Mot de passe de {profil.user.username} réinitialisé.")
+            else:
+                messages.error(request, "Le mot de passe doit faire au moins 4 caractères.")
+
+        elif action == 'supprimer':
+            nom = profil.user.username
+            profil.user.delete()
+            messages.success(request, f"Employé « {nom} » supprimé.")
+            return redirect('employes_liste')
+
+        return redirect('employe_detail', employe_id=employe_id)
+
+    return render(request, 'stock/employe_detail.html', {
+        'profil': profil,
+        'boutiques': boutiques,
+    })

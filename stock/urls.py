@@ -34,4 +34,9 @@ urlpatterns = [
     path('dashboard/', views.dashboard, name='dashboard'),
     path('rapports/benefices/', views.rapport_benefices, name='rapport_benefices'),
     path('rapports/commandes/', views.rapport_commandes, name='rapport_commandes'),
+
+    # Gestion employés
+    path('employes/', views.employes_liste, name='employes_liste'),
+    path('employes/creer/', views.employe_creer, name='employe_creer'),
+    path('employes/<int:employe_id>/', views.employe_detail, name='employe_detail'),
 ]

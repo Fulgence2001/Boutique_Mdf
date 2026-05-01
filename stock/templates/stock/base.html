@@ -27,17 +27,30 @@
 
 {% if user.is_authenticated %}
 <nav class="navbar">
-    <strong>📦 AGT StockManager</strong>
+    <strong>📦 StockManager</strong>
     <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
         {% if request.session.boutique_active_nom %}
             <span class="boutique-badge">🏪 {{ request.session.boutique_active_nom }}</span>
-            <a href="{% url 'dashboard' %}">Dashboard</a>
-            <a href="{% url 'stock_liste' %}">Stock</a>
-            <a href="{% url 'pos' %}">🛒 Caisse</a>
-            <a href="{% url 'vente_historique' %}">Ventes</a>
-            <a href="{% url 'rapport_benefices' %}">Rapports</a>
+
+            {% if user.profil.est_proprietaire %}
+                {# Propriétaire : accès complet #}
+                <a href="{% url 'dashboard' %}">Dashboard</a>
+                <a href="{% url 'stock_liste' %}">Stock</a>
+                <a href="{% url 'pos' %}">🛒 Caisse</a>
+                <a href="{% url 'vente_historique' %}">Ventes</a>
+                <a href="{% url 'rapport_benefices' %}">Rapports</a>
+                <a href="{% url 'employes_liste' %}">👥 Employés</a>
+            {% else %}
+                {# Employé : caisse + stock uniquement #}
+                <a href="{% url 'stock_liste' %}">Stock</a>
+                <a href="{% url 'pos' %}">🛒 Caisse</a>
+                <a href="{% url 'vente_historique' %}">Mes ventes</a>
+            {% endif %}
         {% endif %}
-        <a href="{% url 'choisir_boutique' %}">Boutiques</a>
+
+        <a href="{% url 'choisir_boutique' %}">
+            {% if user.profil.est_proprietaire %}Boutiques{% endif %}
+        </a>
         <a href="{% url 'deconnexion' %}">Déconnexion</a>
     </div>
 </nav>
