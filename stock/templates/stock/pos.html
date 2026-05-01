@@ -1,4 +1,5 @@
 {% extends 'stock/base.html' %}
+{% load stock_tags %}
 {% block title %}Caisse — {{ boutique.nom }}{% endblock %}
 
 {% block extra_css %}
@@ -160,7 +161,6 @@
         </div>
         {% endif %}
     </div>
-
     <!-- ── Panier ── -->
     <div class="panier-panel">
         <div class="panier-header">
@@ -178,13 +178,15 @@
         <hr class="divider">
 
         <div class="panier-total">
-            <span>Total</span>
-            <span id="total-display">0 F</span>
-        </div>
-        <div class="panier-benefice">
-            <span>Bénéfice estimé</span>
-            <span id="benefice-display">0 F</span>
-        </div>
+    <span>Total</span>
+    <span id="total-display">0 F</span>
+</div>
+{% if request.user|est_proprietaire %}
+<div class="panier-benefice">
+    <span>Bénéfice estimé</span>
+    <span id="benefice-display">0 F</span>
+</div>
+{% endif %}
 
         <div class="client-section">
             <label>Mode de paiement</label>

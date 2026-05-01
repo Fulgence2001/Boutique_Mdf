@@ -242,3 +242,77 @@ class LigneVente(models.Model):
     @property
     def benefice(self):
         return self.quantite * (self.prix_vente_unitaire - self.prix_achat_unitaire)
+    
+class DemandeArrivage(models.Model):
+    """
+    Créée par l'employé — doit être confirmée par le propriétaire
+    qui y ajoute le prix d'achat.
+    """
+    STATUT_CHOICES = [
+        ('en_attente', 'En attente'),
+        ('confirme', 'Confirmé'),
+        ('refuse', 'Refusé'),
+    ]
+    TYPE_CHOICES = [
+        ('arrivage', 'Arrivage stock existant'),
+        ('nouveau_produit', 'Nouveau produit'),
+    ]
+
+    boutique = models.ForeignKey(Boutique, on_delete=models.CASCADE, related_name='demandes')
+    employe = models.ForeignKey(User, on_delete=models.CASCADE, related_name='demandes')
+    type_demande = models.CharField(max_length=20, choices=TYPE_CHOICES, default='arrivage')
+    statut = models.CharField(max_length=20, choices=STATUT_CHOICES, default='en_attente')
+    date_creation = models.DateTimeField(auto_now_add=True)
+    date_traitement = models.DateTimeField(null=True, blank=True)
+
+    # Produit existant (arrivage)
+    stock = models.ForeignKey(
+        StockBoutique, on_delete=models.SET_NULL,
+        null=True, blank=True, related_name='demandes'
+    )
+
+    # Nouveau produit
+    nom_produit = models.CharField(max_length=200, blank=True)
+    marque = models.ForeignKey(
+        Marque, on_delete=models.SET_NULL,
+        null=True, blank=True
+    )
+    categorie = models.ForeignKey(
+        Categorie, on_delete=models.SET_NULL,
+        null=True, blank=True
+    )
+    type_produit = models.CharField(max_length=20, blank=True)
+
+    # Infos communes
+    quantite = models.PositiveIntegerField(default=0)
+    date_arrivage = models.DateField(null=True, blank=True)
+    notes = models.TextField(blank=True)
+
+    # IMEI (stockés en JSON : liste de dicts)
+    imeis_json = models.TextField(blank=True, default='[]')
+
+    # Rempli par le propriétaire à la confirmation
+    prix_achat = models.DecimalField(
+        max_digits=10, decimal_places=0,
+        null=True, blank=True
+    )
+    prix_vente_suggere = models.DecimalField(
+        max_digits=10, decimal_places=0,
+        null=True, blank=True
+    )
+    notes_patron = models.TextField(blank=True)
+
+    class Meta:
+        ordering = ['-date_creation']
+        verbose_name = "Demande d'arrivage"
+
+    def __str__(self):
+        return f"{self.get_type_demande_display()} — {self.boutique.nom} — {self.get_statut_display()}"
+
+    @property
+    def imeis_list(self):
+        import json
+        try:
+            return json.loads(self.imeis_json)
+        except Exception:
+            return []

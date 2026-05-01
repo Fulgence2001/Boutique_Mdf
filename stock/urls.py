@@ -39,4 +39,10 @@ urlpatterns = [
     path('employes/', views.employes_liste, name='employes_liste'),
     path('employes/creer/', views.employe_creer, name='employe_creer'),
     path('employes/<int:employe_id>/', views.employe_detail, name='employe_detail'),
+
+    # Demandes arrivage
+    path('demandes/', views.demandes_liste, name='demandes_liste'),
+    path('demandes/<int:demande_id>/', views.demande_traiter, name='demande_traiter'),
+    path('stock/<int:stock_pk>/demande-arrivage/', views.demande_arrivage, name='demande_arrivage'),
+    path('stock/demande-nouveau-produit/', views.demande_nouveau_produit, name='demande_nouveau_produit'),
 ]

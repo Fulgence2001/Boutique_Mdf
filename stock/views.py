@@ -558,15 +558,19 @@ def stock_detail(request, pk):
     boutique = get_boutique_active(request)
     stock = get_object_or_404(StockBoutique, pk=pk, boutique=boutique)
     imeis = stock.imeis.all().order_by('statut', '-date_entree')
-
-    # Arrivage rapide
     arrivage_form = ArrivageForm(request.POST or None)
+
     if request.method == 'POST' and arrivage_form.is_valid():
         data = arrivage_form.cleaned_data
         stock.quantite += data['quantite_ajoutee']
-        stock.prix_achat = data['nouveau_prix_achat']
-        stock.prix_vente_suggere = data['nouveau_prix_vente']
         stock.date_dernier_arrivage = data['date_arrivage']
+
+        # Seul le propriétaire peut changer les prix
+        est_proprio = request.user.profil.est_proprietaire
+        if est_proprio:
+            stock.prix_achat = data['nouveau_prix_achat']
+            stock.prix_vente_suggere = data['nouveau_prix_vente']
+
         stock.save()
         messages.success(request, f"{data['quantite_ajoutee']} unité(s) ajoutée(s) au stock !")
         return redirect('stock_detail', pk=pk)
@@ -992,4 +996,235 @@ def employe_detail(request, employe_id):
     return render(request, 'stock/employe_detail.html', {
         'profil': profil,
         'boutiques': boutiques,
+    })
+import json as json_module
+from .models import DemandeArrivage
+
+
+# ── EMPLOYÉ : Soumettre un arrivage (sans prix) ────────
+@login_required
+@employe_sa_boutique
+def demande_arrivage(request, stock_pk):
+    boutique = get_boutique_active(request)
+    stock = get_object_or_404(StockBoutique, pk=stock_pk, boutique=boutique)
+
+    if request.method == 'POST':
+        quantite = int(request.POST.get('quantite', 0))
+        date_arrivage = request.POST.get('date_arrivage')
+        notes = request.POST.get('notes', '')
+        imeis_bruts = request.POST.get('imeis', '').strip().splitlines()
+        couleur = request.POST.get('couleur', '')
+        stockage = request.POST.get('stockage', '')
+
+        if quantite < 1:
+            messages.error(request, "La quantité doit être au moins 1.")
+            return redirect('stock_detail', pk=stock_pk)
+
+        imeis = []
+        for ligne in imeis_bruts:
+            imei = ligne.strip()
+            if imei:
+                imeis.append({'imei': imei, 'couleur': couleur, 'stockage': stockage})
+
+        DemandeArrivage.objects.create(
+            boutique=boutique,
+            employe=request.user,
+            type_demande='arrivage',
+            stock=stock,
+            quantite=quantite,
+            date_arrivage=date_arrivage or None,
+            notes=notes,
+            imeis_json=json_module.dumps(imeis),
+        )
+
+        messages.success(request, "Arrivage soumis ✅ En attente de validation par le responsable.")
+        return redirect('stock_liste')
+
+    return render(request, 'stock/demande_arrivage.html', {
+        'stock': stock,
+        'boutique': boutique,
+    })
+
+
+# ── EMPLOYÉ : Soumettre un nouveau produit ─────────────
+@login_required
+@employe_sa_boutique
+def demande_nouveau_produit(request):
+    boutique = get_boutique_active(request)
+    marques = Marque.objects.all()
+    categories = Categorie.objects.all()
+
+    if request.method == 'POST':
+        nom_produit = request.POST.get('nom_produit', '').strip()
+        marque_id = request.POST.get('marque_id')
+        categorie_id = request.POST.get('categorie_id')
+        type_produit = request.POST.get('type_produit', 'smartphone')
+        quantite = int(request.POST.get('quantite', 0))
+        date_arrivage = request.POST.get('date_arrivage', '')
+        notes = request.POST.get('notes', '')
+        imeis_bruts = request.POST.get('imeis', '').strip().splitlines()
+        couleur = request.POST.get('couleur', '')
+        stockage = request.POST.get('stockage', '')
+
+        if not nom_produit or not marque_id or not categorie_id:
+            messages.error(request, "Nom, marque et catégorie sont obligatoires.")
+            return render(request, 'stock/demande_nouveau_produit.html', {
+                'marques': marques, 'categories': categories, 'boutique': boutique
+            })
+
+        imeis = []
+        for ligne in imeis_bruts:
+            imei = ligne.strip()
+            if imei:
+                imeis.append({'imei': imei, 'couleur': couleur, 'stockage': stockage})
+
+        DemandeArrivage.objects.create(
+            boutique=boutique,
+            employe=request.user,
+            type_demande='nouveau_produit',
+            nom_produit=nom_produit,
+            marque_id=marque_id,
+            categorie_id=categorie_id,
+            type_produit=type_produit,
+            quantite=quantite,
+            date_arrivage=date_arrivage or None,
+            notes=notes,
+            imeis_json=json_module.dumps(imeis),
+        )
+
+        messages.success(request, "Nouveau produit soumis ✅ En attente de validation.")
+        return redirect('stock_liste')
+
+    return render(request, 'stock/demande_nouveau_produit.html', {
+        'marques': marques,
+        'categories': categories,
+        'boutique': boutique,
+    })
+
+
+# ── PATRON : Liste des demandes en attente ─────────────
+@login_required
+@proprietaire_requis
+def demandes_liste(request):
+    boutique = get_boutique_active(request)
+    if not boutique:
+        return redirect('choisir_boutique')
+
+    boutiques = Boutique.objects.filter(proprietaire=request.user)
+    demandes_attente = DemandeArrivage.objects.filter(
+        boutique__in=boutiques,
+        statut='en_attente'
+    ).select_related('employe', 'boutique', 'stock__produit', 'marque', 'categorie')
+
+    demandes_traitees = DemandeArrivage.objects.filter(
+        boutique__in=boutiques,
+        statut__in=['confirme', 'refuse']
+    ).select_related('employe', 'boutique').order_by('-date_traitement')[:20]
+
+    return render(request, 'stock/demandes_liste.html', {
+        'demandes_attente': demandes_attente,
+        'demandes_traitees': demandes_traitees,
+        'nb_attente': demandes_attente.count(),
+    })
+
+
+# ── PATRON : Confirmer ou refuser une demande ──────────
+@login_required
+@proprietaire_requis
+def demande_traiter(request, demande_id):
+    boutiques = Boutique.objects.filter(proprietaire=request.user)
+    demande = get_object_or_404(DemandeArrivage, id=demande_id, boutique__in=boutiques)
+
+    if request.method == 'POST':
+        action = request.POST.get('action')
+
+        if action == 'refuser':
+            demande.statut = 'refuse'
+            demande.notes_patron = request.POST.get('notes_patron', '')
+            demande.date_traitement = timezone.now()
+            demande.save()
+            messages.warning(request, "Demande refusée.")
+            return redirect('demandes_liste')
+
+        if action == 'confirmer':
+            prix_achat = request.POST.get('prix_achat', '').strip()
+            prix_vente = request.POST.get('prix_vente_suggere', '').strip()
+
+            if not prix_achat or not prix_vente:
+                messages.error(request, "Prix d'achat et prix de vente sont obligatoires.")
+                return redirect('demande_traiter', demande_id=demande_id)
+
+            prix_achat = float(prix_achat)
+            prix_vente = float(prix_vente)
+
+            # ── Arrivage produit existant ────────────
+            if demande.type_demande == 'arrivage' and demande.stock:
+                stock = demande.stock
+                stock.quantite += demande.quantite
+                stock.prix_achat = prix_achat
+                stock.prix_vente_suggere = prix_vente
+                if demande.date_arrivage:
+                    stock.date_dernier_arrivage = demande.date_arrivage
+                stock.save()
+
+                for item in demande.imeis_list:
+                    imei_code = item.get('imei', '').strip()
+                    if imei_code and not SmartphoneIMEI.objects.filter(imei=imei_code).exists():
+                        SmartphoneIMEI.objects.create(
+                            stock=stock,
+                            imei=imei_code,
+                            couleur=item.get('couleur', ''),
+                            stockage=item.get('stockage', ''),
+                        )
+
+            # ── Nouveau produit ───────────────────────
+            elif demande.type_demande == 'nouveau_produit':
+                produit, _ = Produit.objects.get_or_create(
+                    nom=demande.nom_produit,
+                    marque=demande.marque,
+                    defaults={
+                        'categorie': demande.categorie,
+                        'type_produit': demande.type_produit or 'smartphone',
+                    }
+                )
+                stock, created = StockBoutique.objects.get_or_create(
+                    produit=produit,
+                    boutique=demande.boutique,
+                    defaults={
+                        'prix_achat': prix_achat,
+                        'prix_vente_suggere': prix_vente,
+                        'quantite': 0,
+                    }
+                )
+                if not created:
+                    stock.prix_achat = prix_achat
+                    stock.prix_vente_suggere = prix_vente
+
+                stock.quantite += demande.quantite
+                if demande.date_arrivage:
+                    stock.date_dernier_arrivage = demande.date_arrivage
+                stock.save()
+
+                for item in demande.imeis_list:
+                    imei_code = item.get('imei', '').strip()
+                    if imei_code and not SmartphoneIMEI.objects.filter(imei=imei_code).exists():
+                        SmartphoneIMEI.objects.create(
+                            stock=stock,
+                            imei=imei_code,
+                            couleur=item.get('couleur', ''),
+                            stockage=item.get('stockage', ''),
+                        )
+
+            demande.prix_achat = prix_achat
+            demande.prix_vente_suggere = prix_vente
+            demande.notes_patron = request.POST.get('notes_patron', '')
+            demande.statut = 'confirme'
+            demande.date_traitement = timezone.now()
+            demande.save()
+
+            messages.success(request, "✅ Arrivage confirmé et stock mis à jour !")
+            return redirect('demandes_liste')
+
+    return render(request, 'stock/demande_traiter.html', {
+        'demande': demande,
     })

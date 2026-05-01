@@ -1,0 +1,132 @@
+{% extends 'stock/base.html' %}
+{% block title %}Demandes en attente{% endblock %}
+
+{% block extra_css %}
+<style>
+    .page-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:24px; flex-wrap:wrap; gap:12px; }
+    .card { background:white; border-radius:14px; padding:24px; box-shadow:0 2px 14px rgba(0,0,0,.07); margin-bottom:20px; }
+    .card h2 { font-size:16px; font-weight:700; margin-bottom:16px; display:flex; align-items:center; gap:10px; }
+    .badge-count { background:#ef4444; color:white; border-radius:20px; padding:2px 10px; font-size:13px; }
+    .demande-card { border:2px solid #e5e7eb; border-radius:12px; padding:18px; margin-bottom:14px; transition:border-color .2s; }
+    .demande-card:hover { border-color:#4361ee; }
+    .demande-card.attente { border-left:4px solid #f59e0b; }
+    .demande-card.confirme { border-left:4px solid #10b981; }
+    .demande-card.refuse { border-left:4px solid #ef4444; }
+    .demande-header { display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:8px; margin-bottom:12px; }
+    .demande-type { font-size:13px; font-weight:700; }
+    .demande-meta { font-size:12px; color:#666; margin-top:2px; }
+    .badge { padding:3px 12px; border-radius:20px; font-size:12px; font-weight:600; }
+    .badge-attente { background:#fef3c7; color:#b45309; }
+    .badge-confirme { background:#d1fae5; color:#065f46; }
+    .badge-refuse { background:#fee2e2; color:#991b1b; }
+    .demande-detail { display:grid; grid-template-columns:repeat(auto-fill,minmax(140px,1fr)); gap:10px; margin-bottom:12px; }
+    .detail-item { font-size:13px; }
+    .detail-item .lbl { color:#888; font-size:11px; }
+    .detail-item .val { font-weight:600; }
+    .btn { padding:9px 20px; border:none; border-radius:8px; font-size:13px; font-weight:600; cursor:pointer; text-decoration:none; display:inline-block; }
+    .btn-primary { background:#4361ee; color:white; }
+    .empty { text-align:center; padding:40px; color:#888; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1>📬 Demandes d'arrivage</h1>
+        <p style="color:#666; font-size:13px;">Validez les arrivages soumis par vos employés</p>
+    </div>
+    <a href="{% url 'dashboard' %}" style="color:#666; font-size:14px; text-decoration:none;">← Dashboard</a>
+</div>
+
+<!-- En attente -->
+<div class="card">
+    <h2>
+        ⏳ En attente de validation
+        {% if nb_attente %}
+        <span class="badge-count">{{ nb_attente }}</span>
+        {% endif %}
+    </h2>
+
+    {% if demandes_attente %}
+        {% for d in demandes_attente %}
+        <div class="demande-card attente">
+            <div class="demande-header">
+                <div>
+                    <div class="demande-type">
+                        {% if d.type_demande == 'nouveau_produit' %}🆕 Nouveau produit
+                        {% else %}📥 Arrivage stock{% endif %}
+                        —
+                        {% if d.type_demande == 'nouveau_produit' %}
+                            {{ d.marque }} {{ d.nom_produit }}
+                        {% else %}
+                            {{ d.stock.produit }}
+                        {% endif %}
+                    </div>
+                    <div class="demande-meta">
+                        Par <strong>{{ d.employe.username }}</strong> ·
+                        {{ d.boutique.nom }} ·
+                        {{ d.date_creation|date:"d/m/Y à H:i" }}
+                    </div>
+                </div>
+                <span class="badge badge-attente">⏳ En attente</span>
+            </div>
+
+            <div class="demande-detail">
+                <div class="detail-item">
+                    <div class="lbl">Quantité</div>
+                    <div class="val">{{ d.quantite }} unité(s)</div>
+                </div>
+                <div class="detail-item">
+                    <div class="lbl">Date arrivage</div>
+                    <div class="val">{{ d.date_arrivage|date:"d/m/Y"|default:"—" }}</div>
+                </div>
+                <div class="detail-item">
+                    <div class="lbl">IMEI soumis</div>
+                    <div class="val">{{ d.imeis_list|length }}</div>
+                </div>
+                {% if d.notes %}
+                <div class="detail-item">
+                    <div class="lbl">Notes employé</div>
+                    <div class="val">{{ d.notes }}</div>
+                </div>
+                {% endif %}
+            </div>
+
+            <a href="{% url 'demande_traiter' d.id %}" class="btn btn-primary">
+                ✅ Valider et saisir les prix
+            </a>
+        </div>
+        {% endfor %}
+    {% else %}
+    <div class="empty">
+        <p style="font-size:32px">✅</p>
+        <p>Aucune demande en attente.</p>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Historique -->
+{% if demandes_traitees %}
+<div class="card">
+    <h2>📋 Historique récent</h2>
+    {% for d in demandes_traitees %}
+    <div class="demande-card {{ d.statut }}">
+        <div class="demande-header">
+            <div>
+                <div class="demande-type">
+                    {% if d.type_demande == 'nouveau_produit' %}🆕{% else %}📥{% endif %}
+                    {% if d.type_demande == 'nouveau_produit' %}{{ d.nom_produit }}{% else %}{{ d.stock.produit }}{% endif %}
+                </div>
+                <div class="demande-meta">{{ d.employe.username }} · {{ d.date_creation|date:"d/m/Y" }}</div>
+            </div>
+            {% if d.statut == 'confirme' %}
+                <span class="badge badge-confirme">✅ Confirmé</span>
+            {% else %}
+                <span class="badge badge-refuse">❌ Refusé</span>
+            {% endif %}
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+{% endblock %}

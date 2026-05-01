@@ -1,0 +1,77 @@
+{% extends 'stock/base.html' %}
+{% block title %}Signaler un arrivage{% endblock %}
+
+{% block extra_css %}
+<style>
+    .card { background:white; border-radius:16px; padding:32px; max-width:560px; margin:0 auto; box-shadow:0 4px 20px rgba(0,0,0,.08); }
+    .card h1 { font-size:20px; margin-bottom:6px; }
+    .produit-info { background:#f0f4ff; border-radius:10px; padding:14px 16px; margin-bottom:24px; font-size:14px; }
+    .produit-info strong { color:#4361ee; }
+    .form-group { margin-bottom:18px; }
+    .form-group label { display:block; font-size:13px; font-weight:600; margin-bottom:6px; color:#444; }
+    .form-group input, .form-group textarea, .form-group select {
+        width:100%; padding:12px 14px; border:2px solid #e5e7eb; border-radius:10px; font-size:14px; font-family:inherit;
+    }
+    .form-group input:focus, .form-group textarea:focus { outline:none; border-color:#4361ee; }
+    .form-row { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+    .info-box { background:#fef3c7; border-radius:10px; padding:12px 16px; font-size:13px; color:#92400e; margin-bottom:20px; }
+    .btn { padding:12px 28px; border:none; border-radius:10px; font-size:14px; font-weight:600; cursor:pointer; text-decoration:none; display:inline-block; }
+    .btn-primary { background:#4361ee; color:white; }
+    @media(max-width:560px){ .form-row { grid-template-columns:1fr; } }
+</style>
+{% endblock %}
+
+{% block content %}
+<a href="{% url 'stock_detail' stock.pk %}" style="color:#666; font-size:14px; text-decoration:none; display:block; margin-bottom:20px;">← Retour</a>
+
+<div class="card">
+    <h1>📥 Signaler un arrivage</h1>
+
+    <div class="produit-info">
+        Produit : <strong>{{ stock.produit }}</strong><br>
+        Stock actuel : <strong>{{ stock.quantite }} unité(s)</strong>
+    </div>
+
+    <div class="info-box">
+        ℹ️ Le responsable recevra cette demande et y ajoutera le <strong>prix d'achat</strong> avant validation.
+    </div>
+
+    <form method="post">
+        {% csrf_token %}
+        <div class="form-row">
+            <div class="form-group">
+                <label>Quantité reçue *</label>
+                <input type="number" name="quantite" min="1" placeholder="Ex: 10" required>
+            </div>
+            <div class="form-group">
+                <label>Date d'arrivage *</label>
+                <input type="date" name="date_arrivage" required>
+            </div>
+        </div>
+
+        {% if stock.produit.type_produit == 'smartphone' %}
+        <div class="form-group">
+            <label>IMEI reçus (un par ligne)</label>
+            <textarea name="imeis" rows="6" placeholder="351234567890001&#10;351234567890002"></textarea>
+        </div>
+        <div class="form-row">
+            <div class="form-group">
+                <label>Couleur</label>
+                <input type="text" name="couleur" placeholder="Ex: Noir">
+            </div>
+            <div class="form-group">
+                <label>Stockage</label>
+                <input type="text" name="stockage" placeholder="Ex: 128GB">
+            </div>
+        </div>
+        {% endif %}
+
+        <div class="form-group">
+            <label>Notes pour le responsable</label>
+            <textarea name="notes" rows="3" placeholder="Ex: Reçu du fournisseur Ets. Koffi, facture n°123..."></textarea>
+        </div>
+
+        <button type="submit" class="btn btn-primary">📤 Soumettre au responsable</button>
+    </form>
+</div>
+{% endblock %}

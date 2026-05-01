@@ -1,4 +1,5 @@
 {% extends 'stock/base.html' %}
+{% load stock_tags %}
 {% block title %}Stock — {{ boutique.nom }}{% endblock %}
 
 {% block extra_css %}
@@ -39,10 +40,15 @@
         <h1>📦 Stock</h1>
         <p style="color:#666; font-size:14px; margin-top:4px">{{ boutique.nom }}</p>
     </div>
-    <a href="{% url 'stock_ajouter' %}" class="btn btn-primary">+ Ajouter un produit</a>
+    {% if request.user|est_proprietaire %}
+        <a href="{% url 'stock_ajouter' %}" class="btn btn-primary">+ Ajouter un produit</a>
+    {% else %}
+        <a href="{% url 'demande_nouveau_produit' %}" class="btn btn-primary">+ Signaler nouveau produit</a>
+    {% endif %}
 </div>
 
 <!-- Stats -->
+
 <div class="stats-bar">
     <div class="stat-card">
         <div class="val">{{ total_produits }}</div>
@@ -56,6 +62,12 @@
         <div class="val alerte">{{ nb_alertes }}</div>
         <div class="lbl">⚠️ Alertes stock</div>
     </div>
+    {% if request.user|est_proprietaire %}
+    <div class="stat-card">
+        <div class="val">{{ valeur_totale|floatformat:0 }}</div>
+        <div class="lbl">Valeur stock (F)</div>
+    </div>
+    {% endif %}
 </div>
 
 <!-- Filtres -->
@@ -82,6 +94,9 @@
 
 <!-- Tableau -->
 {% if stocks %}
+{% load stock_tags %}
+...
+
 <table>
     <thead>
         <tr>
@@ -89,7 +104,9 @@
             <th>Marque</th>
             <th>Catégorie</th>
             <th>Quantité</th>
+            {% if request.user|est_proprietaire %}
             <th>Prix achat</th>
+            {% endif %}
             <th>Prix vente</th>
             <th>Statut</th>
             <th>Actions</th>
@@ -110,7 +127,9 @@
                 </strong>
                 <span style="color:#aaa; font-size:12px">/ seuil {{ stock.produit.seuil_alerte }}</span>
             </td>
+            {% if request.user|est_proprietaire %}
             <td>{{ stock.prix_achat|floatformat:0 }} F</td>
+            {% endif %}
             <td>{{ stock.prix_vente_suggere|floatformat:0 }} F</td>
             <td>
                 {% if stock.est_sous_seuil %}

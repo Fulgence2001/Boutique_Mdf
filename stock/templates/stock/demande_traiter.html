@@ -1,0 +1,146 @@
+{% extends 'stock/base.html' %}
+{% block title %}Valider la demande{% endblock %}
+
+{% block extra_css %}
+<style>
+    .layout { display:grid; grid-template-columns:1fr 1fr; gap:20px; }
+    .card { background:white; border-radius:14px; padding:24px; box-shadow:0 2px 14px rgba(0,0,0,.07); }
+    .card h2 { font-size:16px; font-weight:700; margin-bottom:16px; padding-bottom:10px; border-bottom:2px solid #f0f0f0; }
+    .info-row { display:flex; justify-content:space-between; padding:9px 0; border-bottom:1px solid #f5f5f5; font-size:13px; }
+    .info-row:last-child { border-bottom:none; }
+    .info-row .lbl { color:#666; }
+    .info-row .val { font-weight:600; }
+    .form-group { margin-bottom:18px; }
+    .form-group label { display:block; font-size:13px; font-weight:600; margin-bottom:6px; color:#444; }
+    .form-group input, .form-group textarea {
+        width:100%; padding:12px 14px; border:2px solid #e5e7eb; border-radius:10px; font-size:14px;
+    }
+    .form-group input:focus, .form-group textarea:focus { outline:none; border-color:#4361ee; }
+    .form-group small { font-size:12px; color:#888; margin-top:4px; display:block; }
+    .btn { padding:12px 24px; border:none; border-radius:10px; font-size:14px; font-weight:600; cursor:pointer; }
+    .btn-success { background:#10b981; color:white; width:100%; margin-bottom:10px; font-size:15px; }
+    .btn-danger { background:#fee2e2; color:#dc2626; width:100%; }
+    .imei-list { max-height:200px; overflow-y:auto; background:#f8fafc; border-radius:8px; padding:12px; }
+    .imei-item { font-family:monospace; font-size:12px; padding:4px 0; border-bottom:1px solid #f0f0f0; }
+    .imei-item:last-child { border-bottom:none; }
+    .alerte-box { background:#fef3c7; border-radius:10px; padding:14px; margin-bottom:16px; font-size:13px; color:#92400e; }
+    @media(max-width:700px){ .layout { grid-template-columns:1fr; } }
+</style>
+{% endblock %}
+
+{% block content %}
+<a href="{% url 'demandes_liste' %}" style="color:#666; font-size:14px; text-decoration:none; display:block; margin-bottom:20px;">← Retour aux demandes</a>
+
+<h1 style="margin-bottom:20px;">
+    {% if demande.type_demande == 'nouveau_produit' %}🆕 Valider nouveau produit{% else %}📥 Valider arrivage{% endif %}
+</h1>
+
+<div class="layout">
+    <!-- Infos soumises par l'employé -->
+    <div class="card">
+        <h2>📋 Informations soumises par {{ demande.employe.username }}</h2>
+
+        <div class="info-row">
+            <span class="lbl">Type</span>
+            <span class="val">{{ demande.get_type_demande_display }}</span>
+        </div>
+        <div class="info-row">
+            <span class="lbl">Boutique</span>
+            <span class="val">{{ demande.boutique.nom }}</span>
+        </div>
+        <div class="info-row">
+            <span class="lbl">Produit</span>
+            <span class="val">
+                {% if demande.type_demande == 'nouveau_produit' %}
+                    {{ demande.marque }} {{ demande.nom_produit }}
+                {% else %}
+                    {{ demande.stock.produit }}
+                {% endif %}
+            </span>
+        </div>
+        {% if demande.type_demande == 'nouveau_produit' %}
+        <div class="info-row">
+            <span class="lbl">Catégorie</span>
+            <span class="val">{{ demande.categorie }}</span>
+        </div>
+        <div class="info-row">
+            <span class="lbl">Type produit</span>
+            <span class="val">{{ demande.type_produit }}</span>
+        </div>
+        {% endif %}
+        <div class="info-row">
+            <span class="lbl">Quantité reçue</span>
+            <span class="val" style="color:#4361ee; font-size:16px;">{{ demande.quantite }}</span>
+        </div>
+        <div class="info-row">
+            <span class="lbl">Date arrivage</span>
+            <span class="val">{{ demande.date_arrivage|date:"d/m/Y"|default:"—" }}</span>
+        </div>
+        <div class="info-row">
+            <span class="lbl">Soumis le</span>
+            <span class="val">{{ demande.date_creation|date:"d/m/Y à H:i" }}</span>
+        </div>
+        {% if demande.notes %}
+        <div class="info-row">
+            <span class="lbl">Notes</span>
+            <span class="val">{{ demande.notes }}</span>
+        </div>
+        {% endif %}
+
+        {% if demande.imeis_list %}
+        <div style="margin-top:16px;">
+            <p style="font-size:13px; font-weight:600; margin-bottom:8px;">📱 {{ demande.imeis_list|length }} IMEI soumis :</p>
+            <div class="imei-list">
+                {% for item in demande.imeis_list %}
+                <div class="imei-item">
+                    {{ item.imei }}
+                    {% if item.couleur %} · {{ item.couleur }}{% endif %}
+                    {% if item.stockage %} · {{ item.stockage }}{% endif %}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Formulaire de validation -->
+    <div>
+        <div class="alerte-box">
+            💡 Saisissez le <strong>prix d'achat réel</strong> et le <strong>prix de vente conseillé</strong> pour valider cet arrivage.
+        </div>
+
+        <div class="card">
+            <h2>💰 Confirmer avec les prix</h2>
+            <form method="post">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="confirmer">
+
+                <div class="form-group">
+                    <label>Prix d'achat unitaire (FCFA) *</label>
+                    <input type="number" name="prix_achat" placeholder="Ex: 85000" required min="0">
+                    <small>Prix auquel vous avez acheté chaque unité</small>
+                </div>
+
+                <div class="form-group">
+                    <label>Prix de vente conseillé (FCFA) *</label>
+                    <input type="number" name="prix_vente_suggere" placeholder="Ex: 95000" required min="0">
+                    <small>Prix affiché aux vendeurs</small>
+                </div>
+
+                <div class="form-group">
+                    <label>Notes (optionnel)</label>
+                    <textarea name="notes_patron" rows="2" placeholder="Ex: Marge réduite, fournisseur pressé..."></textarea>
+                </div>
+
+                <button type="submit" class="btn btn-success">✅ Confirmer et mettre à jour le stock</button>
+            </form>
+
+            <form method="post" style="margin-top:0;" onsubmit="return confirm('Refuser cette demande ?')">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="refuser">
+                <button type="submit" class="btn btn-danger">❌ Refuser la demande</button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

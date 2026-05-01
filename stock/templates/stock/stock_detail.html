@@ -1,4 +1,5 @@
 {% extends 'stock/base.html' %}
+{% load stock_tags %}
 {% block title %}{{ stock.produit }} — Détail{% endblock %}
 
 {% block extra_css %}
@@ -43,8 +44,13 @@
         <p style="color:#666; font-size:14px">{{ stock.produit.categorie }} · {{ stock.produit.get_type_produit_display }}</p>
     </div>
     <div style="display:flex; gap:10px; flex-wrap:wrap;">
-        <a href="{% url 'imei_ajouter' stock.pk %}" class="btn btn-success">+ Ajouter IMEI</a>
-        <a href="{% url 'stock_supprimer' stock.pk %}" class="btn btn-danger">🗑 Supprimer</a>
+        {% if request.user|est_proprietaire %}
+            <a href="{% url 'imei_ajouter' stock.pk %}" class="btn btn-success">+ Ajouter IMEI</a>
+            <a href="{% url 'stock_supprimer' stock.pk %}" class="btn btn-danger">🗑 Supprimer</a>
+        {% else %}
+            <a href="{% url 'demande_arrivage' stock.pk %}" class="btn btn-success">📥 Signaler arrivage</a>
+            <a href="{% url 'imei_ajouter' stock.pk %}" class="btn" style="background:#e0e7ff;color:#4361ee">+ IMEI</a>
+        {% endif %}
     </div>
 </div>
 
@@ -55,26 +61,34 @@
 {% endif %}
 
 <!-- Indicateurs -->
+{% load stock_tags %}
+
 <div class="info-grid">
     <div class="info-card">
         <div class="val {% if stock.est_sous_seuil %}rouge{% endif %}">{{ stock.quantite }}</div>
         <div class="lbl">En stock</div>
     </div>
+    {% if request.user|est_proprietaire %}
     <div class="info-card">
         <div class="val">{{ stock.prix_achat|floatformat:0 }}</div>
         <div class="lbl">Prix achat (F)</div>
     </div>
+    {% endif %}
     <div class="info-card">
         <div class="val vert">{{ stock.prix_vente_suggere|floatformat:0 }}</div>
         <div class="lbl">Prix vente conseillé (F)</div>
     </div>
+    {% if request.user|est_proprietaire %}
     <div class="info-card">
         <div class="val vert">{{ stock.valeur_stock|floatformat:0 }}</div>
         <div class="lbl">Valeur totale stock (F)</div>
     </div>
+    {% endif %}
 </div>
 
 <!-- Arrivage rapide -->
+{% load stock_tags %}
+
 <div class="card">
     <h2>📥 Enregistrer un arrivage</h2>
     <form method="post">
@@ -89,6 +103,7 @@
                 {{ arrivage_form.date_arrivage }}
             </div>
         </div>
+        {% if request.user|est_proprietaire %}
         <div class="form-row">
             <div class="form-group">
                 <label>Nouveau prix d'achat (FCFA) *</label>
@@ -99,6 +114,7 @@
                 {{ arrivage_form.nouveau_prix_vente }}
             </div>
         </div>
+        {% endif %}
         <button type="submit" class="btn btn-primary">✅ Enregistrer l'arrivage</button>
     </form>
 </div>

@@ -63,7 +63,6 @@ class ProduitForm(forms.ModelForm):
             'seuil_alerte': forms.NumberInput(attrs={'min': 1}),
         }
 
-
 class StockBoutiqueForm(forms.ModelForm):
     class Meta:
         model = StockBoutique
@@ -77,7 +76,6 @@ class StockBoutiqueForm(forms.ModelForm):
 
 
 class ArrivageForm(forms.Form):
-    """Formulaire rapide pour ajouter du stock à un produit existant."""
     quantite_ajoutee = forms.IntegerField(
         min_value=1,
         label="Quantité reçue",
@@ -86,11 +84,13 @@ class ArrivageForm(forms.Form):
     nouveau_prix_achat = forms.DecimalField(
         max_digits=10, decimal_places=0,
         label="Nouveau prix d'achat (FCFA)",
+        required=False,   # ← optionnel pour l'employé
         widget=forms.NumberInput(attrs={'placeholder': 'Ex: 83000'})
     )
     nouveau_prix_vente = forms.DecimalField(
         max_digits=10, decimal_places=0,
         label="Nouveau prix de vente conseillé (FCFA)",
+        required=False,   # ← optionnel pour l'employé
         widget=forms.NumberInput(attrs={'placeholder': 'Ex: 95000'})
     )
     date_arrivage = forms.DateField(

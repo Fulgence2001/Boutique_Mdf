@@ -1,4 +1,5 @@
 {% extends 'stock/base.html' %}
+{% load stock_tags %}
 {% block title %}Historique des ventes{% endblock %}
 
 {% block extra_css %}
@@ -37,7 +38,7 @@
     <a href="{% url 'pos' %}" class="btn btn-primary">🛒 Caisse</a>
 </div>
 
-<!-- Stats du jour -->
+<!-- Stats : masquer bénéfice pour employé -->
 <div class="stats-bar">
     <div class="stat-card">
         <div class="val">{{ ventes.count }}</div>
@@ -47,10 +48,12 @@
         <div class="val">{{ total_ca|floatformat:0 }}</div>
         <div class="lbl">Chiffre d'affaires (F)</div>
     </div>
+    {% if request.user|est_proprietaire %}
     <div class="stat-card">
         <div class="val vert">{{ total_benefice|floatformat:0 }}</div>
         <div class="lbl">💰 Bénéfice (F)</div>
     </div>
+    {% endif %}
 </div>
 
 <!-- Navigation date -->
@@ -88,10 +91,13 @@
             {% endfor %}
         </div>
 
-        <div class="vente-footer">
-            <span class="vente-total">{{ vente.montant_total|floatformat:0 }} F</span>
-            <span class="vente-benefice">+{{ vente.benefice_total|floatformat:0 }} F bénéfice</span>
-        </div>
+        <!-- Dans chaque vente card, masquer le bénéfice -->
+<div class="vente-footer">
+    <span class="vente-total">{{ vente.montant_total|floatformat:0 }} F</span>
+    {% if request.user|est_proprietaire %}
+    <span class="vente-benefice">+{{ vente.benefice_total|floatformat:0 }} F bénéfice</span>
+    {% endif %}
+</div>
     </div>
     {% endfor %}
 {% else %}

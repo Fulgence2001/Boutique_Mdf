@@ -1,4 +1,5 @@
 {% extends 'stock/base.html' %}
+{% load stock_tags %}
 {% block title %}Vente validée — Reçu{% endblock %}
 
 {% block extra_css %}
@@ -56,9 +57,11 @@
         <span>{{ vente.montant_total|floatformat:0 }} F</span>
     </div>
 
-    <div class="benefice-badge">
-        💰 Bénéfice réalisé : {{ vente.benefice_total|floatformat:0 }} F
-    </div>
+    {% if request.user|est_proprietaire %}
+<div class="benefice-badge">
+    💰 Bénéfice réalisé : {{ vente.benefice_total|floatformat:0 }} F
+</div>
+{% endif %}
 
     <div class="recu-meta">
         <p>💳 Paiement : <strong>{{ vente.get_mode_paiement_display }}</strong></p>

@@ -1,7 +1,7 @@
 from django.contrib import admin
 from .models import (
     Boutique, ProfilEmploye, Marque, Categorie,
-    Produit, StockBoutique, SmartphoneIMEI, Vente, LigneVente
+    Produit, StockBoutique, SmartphoneIMEI, Vente, LigneVente , DemandeArrivage
 )
 
 admin.site.register(Boutique)
@@ -11,6 +11,7 @@ admin.site.register(Categorie)
 admin.site.register(Produit)
 admin.site.register(StockBoutique)
 admin.site.register(SmartphoneIMEI)
+admin.site.register(DemandeArrivage)
 
 class LigneVenteInline(admin.TabularInline):
     model = LigneVente
