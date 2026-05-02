@@ -1,18 +1,50 @@
 {% extends 'stock/base.html' %}
-{% block title %}Confirmer la suppression{% endblock %}
+{% block title %}Supprimer / Archiver{% endblock %}
 
 {% block content %}
-<div style="background:white; border-radius:14px; padding:32px; max-width:480px; margin:0 auto; text-align:center; box-shadow:0 4px 16px rgba(0,0,0,.07)">
-    <p style="font-size:48px">🗑️</p>
-    <h2>Supprimer ce produit ?</h2>
-    <p style="color:#666; margin:12px 0 24px; font-size:14px">
-        Vous allez supprimer <strong>{{ stock.produit }}</strong> de la boutique <strong>{{ stock.boutique.nom }}</strong>.
-        Cette action est irréversible.
-    </p>
-    <form method="post" style="display:flex; gap:12px; justify-content:center;">
-        {% csrf_token %}
-        <button type="submit" style="padding:12px 28px; background:#ef4444; color:white; border:none; border-radius:10px; font-size:15px; cursor:pointer; font-weight:600;">Oui, supprimer</button>
-        <a href="{% url 'stock_detail' stock.pk %}" style="padding:12px 28px; background:#e5e7eb; color:#444; border-radius:10px; font-size:15px; text-decoration:none; font-weight:600;">Annuler</a>
-    </form>
+<div style="background:white; border-radius:14px; padding:32px; max-width:500px; margin:0 auto; text-align:center; box-shadow:0 4px 16px rgba(0,0,0,.07)">
+
+    {% if nb_ventes > 0 %}
+        <p style="font-size:48px">⚠️</p>
+        <h2>Impossible de supprimer</h2>
+        <p style="color:#666; margin:12px 0; font-size:14px">
+            <strong>{{ stock.produit }}</strong> est lié à
+            <strong>{{ nb_ventes }} vente(s)</strong> enregistrée(s).
+            Supprimer ce produit effacerait l'historique financier.
+        </p>
+        <div style="background:#fef3c7; border-radius:10px; padding:14px; margin:16px 0; font-size:13px; color:#92400e;">
+            💡 À la place, vous pouvez l'<strong>archiver</strong> : le stock sera mis à 0
+            et le produit disparaîtra de la caisse, mais les ventes passées sont conservées.
+        </div>
+        <form method="post" style="display:flex; gap:12px; justify-content:center; flex-wrap:wrap;">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="archiver">
+            <button type="submit" style="padding:12px 28px; background:#f59e0b; color:white; border:none; border-radius:10px; font-size:15px; cursor:pointer; font-weight:600;">
+                📦 Archiver (stock à 0)
+            </button>
+            <a href="{% url 'stock_detail' stock.pk %}" style="padding:12px 28px; background:#e5e7eb; color:#444; border-radius:10px; font-size:15px; text-decoration:none; font-weight:600;">
+                Annuler
+            </a>
+        </form>
+
+    {% else %}
+        <p style="font-size:48px">🗑️</p>
+        <h2>Supprimer ce produit ?</h2>
+        <p style="color:#666; margin:12px 0 24px; font-size:14px">
+            Vous allez supprimer <strong>{{ stock.produit }}</strong> de
+            <strong>{{ stock.boutique.nom }}</strong>. Cette action est irréversible.
+        </p>
+        <form method="post" style="display:flex; gap:12px; justify-content:center;">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="supprimer">
+            <button type="submit" style="padding:12px 28px; background:#ef4444; color:white; border:none; border-radius:10px; font-size:15px; cursor:pointer; font-weight:600;">
+                🗑️ Oui, supprimer
+            </button>
+            <a href="{% url 'stock_detail' stock.pk %}" style="padding:12px 28px; background:#e5e7eb; color:#444; border-radius:10px; font-size:15px; text-decoration:none; font-weight:600;">
+                Annuler
+            </a>
+        </form>
+    {% endif %}
+
 </div>
 {% endblock %}

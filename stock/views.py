@@ -653,12 +653,32 @@ def stock_modifier_seuil(request, pk):
 def stock_supprimer(request, pk):
     boutique = get_boutique_active(request)
     stock = get_object_or_404(StockBoutique, pk=pk, boutique=boutique)
+
+    # Vérifie si ce stock a des ventes liées
+    nb_ventes = stock.lignes_vente.count()
+
     if request.method == 'POST':
-        nom = str(stock.produit)
-        stock.delete()
-        messages.success(request, f"« {nom} » supprimé du stock.")
-        return redirect('stock_liste')
-    return render(request, 'stock/stock_confirmer_suppression.html', {'stock': stock})
+        action = request.POST.get('action')
+
+        if nb_ventes > 0 and action == 'archiver':
+            # On ne supprime pas — on met la quantité à 0 et on désactive
+            stock.quantite = 0
+            stock.produit.seuil_alerte = 0
+            stock.produit.save()
+            stock.save()
+            messages.warning(request, f"« {stock.produit} » archivé (stock à 0). L'historique des ventes est conservé.")
+            return redirect('stock_liste')
+
+        elif nb_ventes == 0 and action == 'supprimer':
+            nom = str(stock.produit)
+            stock.delete()
+            messages.success(request, f"« {nom} » supprimé définitivement.")
+            return redirect('stock_liste')
+
+    return render(request, 'stock/stock_confirmer_suppression.html', {
+        'stock': stock,
+        'nb_ventes': nb_ventes,
+    })
 
 from .models import Vente, LigneVente
 from django.utils import timezone
