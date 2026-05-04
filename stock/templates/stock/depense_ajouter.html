@@ -1,0 +1,63 @@
+{% extends 'stock/base.html' %}
+{% block title %}Nouvelle dépense{% endblock %}
+
+{% block extra_css %}
+<style>
+    .card { background:white; border-radius:16px; padding:32px; max-width:460px; margin:0 auto; box-shadow:0 4px 20px rgba(0,0,0,.08); }
+    .card h1 { font-size:22px; margin-bottom:24px; }
+    .form-group { margin-bottom:20px; }
+    .form-group label { display:block; font-size:13px; font-weight:600; margin-bottom:7px; color:#444; }
+    .form-group input, .form-group textarea {
+        width:100%; padding:13px 16px; border:2px solid #e5e7eb;
+        border-radius:10px; font-size:15px; font-family:inherit;
+    }
+    .form-group input:focus, .form-group textarea:focus { outline:none; border-color:#ef4444; }
+    .montant-input { font-size:26px !important; font-weight:800 !important; color:#ef4444; text-align:center; }
+    .raccourcis { display:flex; gap:8px; flex-wrap:wrap; margin-top:10px; }
+    .raccourci { padding:7px 14px; background:#f3f4f6; border:2px solid #e5e7eb; border-radius:8px; font-size:13px; cursor:pointer; font-weight:600; color:#444; }
+    .raccourci:hover { border-color:#ef4444; color:#ef4444; background:white; }
+    .btn { width:100%; padding:14px; border:none; border-radius:10px; font-size:16px; font-weight:700; cursor:pointer; margin-top:6px; }
+    .btn-rouge { background:#ef4444; color:white; }
+    .btn-annuler { background:#e5e7eb; color:#444; text-decoration:none; display:block; text-align:center; }
+</style>
+{% endblock %}
+
+{% block content %}
+<a href="{% url 'depenses_liste' %}" style="color:#666; font-size:14px; text-decoration:none; display:block; margin-bottom:20px;">← Retour</a>
+
+<div class="card">
+    <h1>💸 Nouvelle dépense</h1>
+
+    <form method="post">
+        {% csrf_token %}
+
+        <div class="form-group">
+            <label>Montant (FCFA) *</label>
+            <input type="number" name="montant" class="montant-input"
+                   placeholder="0" min="1" required id="montant-input">
+            <div class="raccourcis">
+                <button type="button" class="raccourci" onclick="setMontant(5000)">5 000</button>
+                <button type="button" class="raccourci" onclick="setMontant(10000)">10 000</button>
+                <button type="button" class="raccourci" onclick="setMontant(25000)">25 000</button>
+                <button type="button" class="raccourci" onclick="setMontant(50000)">50 000</button>
+                <button type="button" class="raccourci" onclick="setMontant(100000)">100 000</button>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label>Motif *</label>
+            <textarea name="motif" rows="3" required
+                placeholder="Ex: Patron a pris 50.000F&#10;Ex: Remis 10.000F à Kofi pour transport&#10;Ex: Achat carnet de reçus"></textarea>
+        </div>
+
+        <button type="submit" class="btn btn-rouge">💸 Enregistrer</button>
+        <a href="{% url 'depenses_liste' %}" class="btn btn-annuler" style="margin-top:10px;">Annuler</a>
+    </form>
+</div>
+
+<script>
+function setMontant(val) {
+    document.getElementById('montant-input').value = val;
+}
+</script>
+{% endblock %}

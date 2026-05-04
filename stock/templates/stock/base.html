@@ -37,6 +37,7 @@
                 <a href="{% url 'dashboard' %}">Dashboard</a>
                 <a href="{% url 'stock_liste' %}">Stock</a>
                 <a href="{% url 'pos' %}">🛒 Caisse</a>
+                <a href="{% url 'depenses_liste' %}">📒 Dépenses</a>
                 <a href="{% url 'vente_historique' %}">Ventes</a>
                 <a href="{% url 'rapport_benefices' %}">Rapports</a>
                 <a href="{% url 'employes_liste' %}">👥 Employés</a>
@@ -47,6 +48,7 @@
                 {# Employé : caisse + stock uniquement #}
                 <a href="{% url 'stock_liste' %}">Stock</a>
                 <a href="{% url 'pos' %}">🛒 Caisse</a>
+                <a href="{% url 'depenses_liste' %}">📒 Dépenses</a>
                 <a href="{% url 'vente_historique' %}">Mes ventes</a>
             {% endif %}
         {% endif %}

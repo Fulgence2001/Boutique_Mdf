@@ -45,4 +45,10 @@ urlpatterns = [
     path('demandes/<int:demande_id>/', views.demande_traiter, name='demande_traiter'),
     path('stock/<int:stock_pk>/demande-arrivage/', views.demande_arrivage, name='demande_arrivage'),
     path('stock/demande-nouveau-produit/', views.demande_nouveau_produit, name='demande_nouveau_produit'),
+
+   # Dépenses  ← AJOUTE CES 3 LIGNES
+    path('depenses/', views.depenses_liste, name='depenses_liste'),
+    path('depenses/ajouter/', views.depense_ajouter, name='depense_ajouter'),
+    path('depenses/<int:depense_id>/supprimer/', views.depense_supprimer, name='depense_supprimer'),
+
 ]

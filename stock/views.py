@@ -1248,3 +1248,117 @@ def demande_traiter(request, demande_id):
     return render(request, 'stock/demande_traiter.html', {
         'demande': demande,
     })
+
+from .models import Depense
+
+
+@login_required
+def depenses_liste(request):
+    boutique = get_boutique_active(request)
+    if not boutique:
+        return redirect('choisir_boutique')
+
+    aujourd_hui = timezone.now().date()
+    date_str = request.GET.get('date', str(aujourd_hui))
+    try:
+        from datetime import date as date_type
+        date_filtre = date_type.fromisoformat(date_str)
+    except ValueError:
+        date_filtre = aujourd_hui
+
+    # Ventes du jour
+    ventes = Vente.objects.filter(
+        boutique=boutique,
+        date_vente__date=date_filtre
+    ).prefetch_related('lignes').order_by('date_vente')
+
+    # Dépenses du jour
+    depenses = Depense.objects.filter(
+        boutique=boutique,
+        date_depense__date=date_filtre
+    ).select_related('enregistre_par').order_by('date_depense')
+
+    # Calculs
+    total_ca = sum(v.montant_total for v in ventes)
+    total_benefice_brut = sum(v.benefice_total for v in ventes)
+    total_depenses = sum(d.montant for d in depenses)
+    benefice_net = total_benefice_brut - total_depenses
+
+    # Fusionner ventes + dépenses dans un seul flux chronologique
+    flux = []
+    for v in ventes:
+        flux.append({
+            'type': 'vente',
+            'heure': v.date_vente,
+            'obj': v,
+        })
+    for d in depenses:
+        flux.append({
+            'type': 'depense',
+            'heure': d.date_depense,
+            'obj': d,
+        })
+    flux.sort(key=lambda x: x['heure'])
+
+    return render(request, 'stock/depenses_liste.html', {
+        'boutique': boutique,
+        'flux': flux,
+        'date_filtre': date_filtre,
+        'aujourd_hui': aujourd_hui,
+        'total_ca': total_ca,
+        'total_benefice_brut': total_benefice_brut,
+        'total_depenses': total_depenses,
+        'benefice_net': benefice_net,
+        'nb_ventes': ventes.count(),
+        'nb_depenses': depenses.count(),
+    })
+
+
+@login_required
+def depense_ajouter(request):
+    boutique = get_boutique_active(request)
+    if not boutique:
+        return redirect('choisir_boutique')
+
+    if request.method == 'POST':
+        montant = request.POST.get('montant', '').strip()
+        motif = request.POST.get('motif', '').strip()
+
+        if not montant or not motif:
+            messages.error(request, "Montant et motif sont obligatoires.")
+        else:
+            try:
+                montant_val = float(montant)
+                if montant_val <= 0:
+                    raise ValueError
+            except ValueError:
+                messages.error(request, "Montant invalide.")
+                return redirect('depense_ajouter')
+
+            Depense.objects.create(
+                boutique=boutique,
+                enregistre_par=request.user,
+                montant=montant_val,
+                motif=motif,
+            )
+            messages.success(request, f"Dépense de {montant_val:,.0f} F enregistrée.")
+            return redirect('depenses_liste')
+
+    return render(request, 'stock/depense_ajouter.html', {'boutique': boutique})
+
+
+@login_required
+def depense_supprimer(request, depense_id):
+    boutique = get_boutique_active(request)
+    depense = get_object_or_404(Depense, id=depense_id, boutique=boutique)
+
+    if not request.user.profil.est_proprietaire and depense.enregistre_par != request.user:
+        messages.error(request, "Action non autorisée.")
+        return redirect('depenses_liste')
+
+    if request.method == 'POST':
+        depense.delete()
+        messages.success(request, "Dépense supprimée.")
+        return redirect('depenses_liste')
+
+    return render(request, 'stock/depense_supprimer_confirm.html', {'depense': depense})

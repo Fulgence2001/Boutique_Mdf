@@ -316,3 +316,24 @@ class DemandeArrivage(models.Model):
             return json.loads(self.imeis_json)
         except Exception:
             return []
+
+class Depense(models.Model):
+    boutique = models.ForeignKey(
+        Boutique, on_delete=models.CASCADE, related_name='depenses'
+    )
+    enregistre_par = models.ForeignKey(
+        User, on_delete=models.PROTECT, related_name='depenses'
+    )
+    montant = models.DecimalField(max_digits=10, decimal_places=0)
+    motif = models.CharField(
+        max_length=255,
+        help_text="Ex: Patron a pris 50.000F, Remis à Kofi pour transport..."
+    )
+    date_depense = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-date_depense']
+        verbose_name = "Dépense"
+
+    def __str__(self):
+        return f"{self.motif} — {self.montant} F"

@@ -1,0 +1,176 @@
+{% extends 'stock/base.html' %}
+{% load stock_tags %}
+{% block title %}Caisse du jour — {{ boutique.nom }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .page-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; flex-wrap:wrap; gap:12px; }
+    .date-nav { display:flex; gap:10px; align-items:center; margin-bottom:20px; flex-wrap:wrap; }
+    .date-nav input { padding:9px 14px; border:2px solid #e5e7eb; border-radius:10px; font-size:14px; }
+    .date-nav input:focus { outline:none; border-color:#4361ee; }
+    .btn { padding:9px 18px; border:none; border-radius:8px; font-size:13px; font-weight:600; cursor:pointer; text-decoration:none; display:inline-block; }
+    .btn-primary { background:#4361ee; color:white; }
+    .btn-rouge { background:#ef4444; color:white; }
+    .stats-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(160px,1fr)); gap:12px; margin-bottom:24px; }
+    .stat-card { background:white; border-radius:12px; padding:16px; text-align:center; box-shadow:0 2px 10px rgba(0,0,0,.06); border-top:3px solid transparent; }
+    .stat-card.bleu { border-top-color:#4361ee; }
+    .stat-card.vert { border-top-color:#10b981; }
+    .stat-card.rouge { border-top-color:#ef4444; }
+    .stat-card.or { border-top-color:#f59e0b; }
+    .stat-card .val { font-size:20px; font-weight:800; }
+    .stat-card .val.vert { color:#10b981; }
+    .stat-card .val.rouge { color:#ef4444; }
+    .stat-card .val.or { color:#f59e0b; }
+    .stat-card .lbl { font-size:11px; color:#666; margin-top:3px; }
+    /* Bilan */
+    .bilan { border-radius:14px; padding:20px 24px; margin-bottom:24px; }
+    .bilan.positif { background:#d1fae5; border:2px solid #10b981; }
+    .bilan.negatif { background:#fee2e2; border:2px solid #ef4444; }
+    .bilan-row { display:flex; justify-content:space-between; font-size:14px; padding:5px 0; }
+    .bilan-total { display:flex; justify-content:space-between; font-size:20px; font-weight:800; padding-top:10px; margin-top:8px; border-top:2px solid rgba(0,0,0,.1); }
+    /* Flux */
+    .flux-card { background:white; border-radius:14px; padding:20px 24px; box-shadow:0 2px 14px rgba(0,0,0,.07); }
+    .flux-card h2 { font-size:16px; font-weight:700; margin-bottom:16px; }
+    .flux-item { display:flex; justify-content:space-between; align-items:center; padding:13px 0; border-bottom:1px solid #f5f5f5; gap:12px; }
+    .flux-item:last-child { border-bottom:none; }
+    .flux-gauche { flex:1; }
+    .flux-heure { font-size:11px; color:#aaa; margin-bottom:3px; }
+    .flux-label { font-size:14px; font-weight:600; }
+    .flux-sub { font-size:12px; color:#888; margin-top:2px; }
+    .flux-montant { font-size:16px; font-weight:800; white-space:nowrap; }
+    .flux-montant.vente { color:#10b981; }
+    .flux-montant.depense { color:#ef4444; }
+    .type-badge { display:inline-block; padding:2px 10px; border-radius:20px; font-size:11px; font-weight:700; margin-bottom:4px; }
+    .type-vente { background:#d1fae5; color:#065f46; }
+    .type-depense { background:#fee2e2; color:#991b1b; }
+    .empty { text-align:center; padding:50px; color:#aaa; }
+    .btn-sm { padding:4px 10px; font-size:11px; border-radius:6px; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1>📒 Caisse du jour</h1>
+        <p style="color:#666; font-size:13px;">{{ boutique.nom }}</p>
+    </div>
+    <a href="{% url 'depense_ajouter' %}" class="btn btn-rouge">+ Dépense</a>
+</div>
+
+<!-- Navigation date -->
+<form method="get" class="date-nav">
+    <input type="date" name="date" value="{{ date_filtre|date:'Y-m-d' }}">
+    <button type="submit" class="btn btn-primary">Voir</button>
+    <a href="{% url 'depenses_liste' %}" class="btn" style="background:#e5e7eb;color:#444;">Aujourd'hui</a>
+</form>
+
+<!-- Stats -->
+<div class="stats-grid">
+    <div class="stat-card bleu">
+        <div class="val">{{ nb_ventes }}</div>
+        <div class="lbl">Ventes</div>
+    </div>
+    <div class="stat-card vert">
+        <div class="val vert">{{ total_ca|floatformat:0 }}</div>
+        <div class="lbl">CA (F)</div>
+    </div>
+    <div class="stat-card rouge">
+        <div class="val rouge">{{ total_depenses|floatformat:0 }}</div>
+        <div class="lbl">Dépenses (F)</div>
+    </div>
+    {% if request.user|est_proprietaire %}
+    <div class="stat-card or">
+        <div class="val or">{{ total_benefice_brut|floatformat:0 }}</div>
+        <div class="lbl">Bénéfice brut (F)</div>
+    </div>
+    <div class="stat-card {% if benefice_net >= 0 %}vert{% else %}rouge{% endif %}">
+        <div class="val {% if benefice_net >= 0 %}vert{% else %}rouge{% endif %}">
+            {{ benefice_net|floatformat:0 }}
+        </div>
+        <div class="lbl">Bénéfice net (F)</div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Bilan (propriétaire uniquement) -->
+{% if request.user|est_proprietaire %}
+<div class="bilan {% if benefice_net >= 0 %}positif{% else %}negatif{% endif %}">
+    <div class="bilan-row">
+        <span>💰 Bénéfice brut des ventes</span>
+        <strong style="color:#10b981;">+{{ total_benefice_brut|floatformat:0 }} F</strong>
+    </div>
+    <div class="bilan-row">
+        <span>💸 Total dépenses</span>
+        <strong style="color:#ef4444;">-{{ total_depenses|floatformat:0 }} F</strong>
+    </div>
+    <div class="bilan-total">
+        <span>Bénéfice net du {{ date_filtre|date:"d/m/Y" }}</span>
+        <span style="color:{% if benefice_net >= 0 %}#065f46{% else %}#991b1b{% endif %}">
+            {{ benefice_net|floatformat:0 }} F
+        </span>
+    </div>
+</div>
+{% endif %}
+
+<!-- Flux chronologique ventes + dépenses -->
+<div class="flux-card">
+    <h2>📋 Flux du {{ date_filtre|date:"d/m/Y" }}</h2>
+
+    {% if flux %}
+        {% for item in flux %}
+        <div class="flux-item">
+            <div class="flux-gauche">
+                <div class="flux-heure">{{ item.heure|date:"H:i" }}</div>
+
+                {% if item.type == 'vente' %}
+                    <span class="type-badge type-vente">✅ Vente</span>
+                    <div class="flux-label">
+                        #{{ item.obj.reference|stringformat:"s"|slice:":8"|upper }}
+                        {% if item.obj.nom_client %} · {{ item.obj.nom_client }}{% endif %}
+                    </div>
+                    <div class="flux-sub">
+                        {{ item.obj.vendeur.username }} ·
+                        {{ item.obj.get_mode_paiement_display }}
+                        {% if request.user|est_proprietaire %}
+                         · Bén: {{ item.obj.benefice_total|floatformat:0 }} F
+                        {% endif %}
+                    </div>
+
+                {% else %}
+                    <span class="type-badge type-depense">💸 Dépense</span>
+                    <div class="flux-label">{{ item.obj.motif }}</div>
+                    <div class="flux-sub">
+                        Enregistré par {{ item.obj.enregistre_par.username }}
+                    </div>
+                {% endif %}
+            </div>
+
+            <div style="display:flex; align-items:center; gap:10px;">
+                {% if item.type == 'vente' %}
+                    <span class="flux-montant vente">
+                        +{{ item.obj.montant_total|floatformat:0 }} F
+                    </span>
+                    <a href="{% url 'vente_detail' item.obj.id %}"
+                       class="btn btn-sm" style="background:#f0f4ff;color:#4361ee;">
+                        Voir
+                    </a>
+                {% else %}
+                    <span class="flux-montant depense">
+                        -{{ item.obj.montant|floatformat:0 }} F
+                    </span>
+                    {% if request.user|est_proprietaire or item.obj.enregistre_par == request.user %}
+                    <a href="{% url 'depense_supprimer' item.obj.id %}"
+                       class="btn btn-sm btn-rouge">🗑</a>
+                    {% endif %}
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+        <div class="empty">
+            <p style="font-size:36px">📭</p>
+            <p>Aucune activité ce jour.</p>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
