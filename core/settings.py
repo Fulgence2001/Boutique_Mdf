@@ -28,10 +28,7 @@ SECRET_KEY = 'django-insecure-jko=$=o0+&@f79lyf76f!4c5oklk(=#j*m@9-76lumus#ea^&-
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['mon-projet-gestion-stock-boutique.onrender.com', 
-    'localhost', 
-    '127.0.0.1',
-    '.onrender.com']
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition

@@ -50,21 +50,12 @@ def vue_connexion(request):
         messages.success(request, f"Bienvenue {user.first_name or user.username} !")
         return redirect('choisir_boutique')
 
-    # Récupère l'IP locale
-    import socket
-    try:
-        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        s.connect(("8.8.8.8", 80))
-        ip_locale = s.getsockname()[0]
-        s.close()
-    except Exception:
-        ip_locale = "192.168.43.1"
+    ip_locale = "192.168.43.1"
 
     return render(request, 'stock/login.html', {
         'form': form,
         'ip_locale': ip_locale,
     })
-
 
 # ── Inscription ────────────────────────────────────────
 def vue_inscription(request):
