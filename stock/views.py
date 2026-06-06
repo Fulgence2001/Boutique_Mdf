@@ -50,7 +50,16 @@ def vue_connexion(request):
         messages.success(request, f"Bienvenue {user.first_name or user.username} !")
         return redirect('choisir_boutique')
 
-    ip_locale = "192.168.43.1"
+    import subprocess
+    try:
+        result = subprocess.run(['ifconfig'], capture_output=True, text=True)
+        ip_locale = '192.168.43.1'
+        for line in result.stdout.split('\n'):
+            if 'inet ' in line and '127.0.0.1' not in line:
+                ip_locale = line.strip().split()[1]
+                break
+    except Exception:
+        ip_locale = '192.168.43.1'
 
     return render(request, 'stock/login.html', {
         'form': form,
