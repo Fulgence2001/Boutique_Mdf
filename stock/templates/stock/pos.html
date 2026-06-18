@@ -189,6 +189,12 @@
 {% endif %}
 
         <div class="client-section">
+            <label>Date de la vente</label>
+    <input type="date" id="date-vente" value="{{ today }}"
+           style="width:100%; padding:9px 13px; border:2px solid #e5e7eb; border-radius:8px; font-size:13px; margin-bottom:8px;">
+    <p style="font-size:11px; color:#888; margin-bottom:8px;">
+        Laissez la date d'aujourd'hui ou changez pour une vente antérieure
+    </p>
             <label>Mode de paiement</label>
             <select id="mode-paiement">
                 <option value="especes">💵 Espèces</option>
@@ -400,17 +406,18 @@ function validerVente() {
     btn.disabled = true;
     btn.textContent = '⏳ Validation...';
 
-    const payload = {
-        panier: panier.map(p => ({
-            stock_id: p.stock_id,
-            quantite: p.quantite,
-            prix_vente: p.prix_vente,
-            imei_id: p.imei_id,
-        })),
-        mode_paiement: document.getElementById('mode-paiement').value,
-        nom_client: document.getElementById('nom-client').value,
-        telephone_client: document.getElementById('tel-client').value,
-    };
+   const payload = {
+    panier: panier.map(p => ({
+        stock_id: p.stock_id,
+        quantite: p.quantite,
+        prix_vente: p.prix_vente,
+        imei_id: p.imei_id,
+    })),
+    mode_paiement: document.getElementById('mode-paiement').value,
+    nom_client: document.getElementById('nom-client').value,
+    telephone_client: document.getElementById('tel-client').value,
+    date_vente_reelle: document.getElementById('date-vente').value,  // ← AJOUTE ÇA
+};
 
     fetch("{% url 'valider_vente' %}", {
         method: 'POST',

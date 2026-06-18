@@ -50,5 +50,17 @@ urlpatterns = [
     path('depenses/', views.depenses_liste, name='depenses_liste'),
     path('depenses/ajouter/', views.depense_ajouter, name='depense_ajouter'),
     path('depenses/<int:depense_id>/supprimer/', views.depense_supprimer, name='depense_supprimer'),
+    
+    
+    path('stock/mouvements/', views.historique_mouvements, name='historique_mouvements'),
+
+    # Marques & Catégories
+    path('catalogue/', views.gerer_marques_categories, name='gerer_marques_categories'),
+    path('catalogue/marque/ajouter/', views.ajouter_marque, name='ajouter_marque'),
+    path('catalogue/marque/<int:marque_id>/supprimer/', views.supprimer_marque, name='supprimer_marque'),
+    path('catalogue/categorie/ajouter/', views.ajouter_categorie, name='ajouter_categorie'),
+    path('catalogue/categorie/<int:categorie_id>/supprimer/', views.supprimer_categorie, name='supprimer_categorie'),
+
+    path('ventes/export-pdf/', views.export_ventes_pdf, name='export_ventes_pdf'),
 
 ]

@@ -708,13 +708,11 @@ def pos(request):
     if not boutique:
         return redirect('choisir_boutique')
 
-    # Tous les stocks disponibles de la boutique
     stocks = StockBoutique.objects.filter(
         boutique=boutique,
         quantite__gt=0
     ).select_related('produit', 'produit__marque', 'produit__categorie')
 
-    # Filtres de recherche produit
     q = request.GET.get('q', '')
     marque_id = request.GET.get('marque', '')
     if q:
@@ -723,8 +721,6 @@ def pos(request):
         stocks = stocks.filter(produit__marque_id=marque_id)
 
     marques = Marque.objects.all()
-
-    # Ventes du jour
     aujourd_hui = timezone.now().date()
     ventes_jour = Vente.objects.filter(
         boutique=boutique,
@@ -738,6 +734,7 @@ def pos(request):
         'q': q,
         'marque_id': marque_id,
         'ventes_jour': ventes_jour,
+        'today': aujourd_hui,   # ← AJOUTE ÇA
     })
 
 
@@ -793,12 +790,15 @@ def valider_vente(request):
         return JsonResponse({'erreurs': erreurs}, status=400)
 
     # ── Création de la vente ──────────────────────────
+    date_vente_reelle = data.get('date_vente_reelle')
+
     vente = Vente.objects.create(
         boutique=boutique,
         vendeur=request.user,
         mode_paiement=mode_paiement,
         nom_client=nom_client,
         telephone_client=telephone_client,
+        date_vente_reelle=date_vente_reelle or None,
     )
 
     for item in panier:
@@ -831,6 +831,18 @@ def valider_vente(request):
         # ── Décrémentation du stock ──────────────────
         stock.quantite -= quantite
         stock.save()
+
+        # ── Enregistrement mouvement sortie ──────────
+        from .models import MouvementStock
+        MouvementStock.objects.create(
+            stock=stock,
+            type_mouvement='sortie',
+            motif='vente',
+            quantite=quantite,
+            effectue_par=request.user,
+            prix_unitaire=prix_vente,
+            notes=f"Vente #{str(vente.reference)[:8].upper()}"
+        )
 
     return JsonResponse({
         'succes': True,
@@ -868,12 +880,15 @@ def vente_historique(request):
     except ValueError:
         date_filtre = aujourd_hui
 
+    # Filtre par date réelle ou date de saisie
+    from django.db.models import Q
     ventes = Vente.objects.filter(
-        boutique=boutique,
-        date_vente__date=date_filtre
+        boutique=boutique
+    ).filter(
+        Q(date_vente_reelle=date_filtre) |
+        Q(date_vente_reelle__isnull=True, date_vente__date=date_filtre)
     ).prefetch_related('lignes__stock__produit').order_by('-date_vente')
 
-    # Calculs du jour
     total_ca = sum(v.montant_total for v in ventes)
     total_benefice = sum(v.benefice_total for v in ventes)
 
@@ -1200,6 +1215,18 @@ def demande_traiter(request, demande_id):
                     stock.date_dernier_arrivage = demande.date_arrivage
                 stock.save()
 
+                # ── Enregistrement mouvement entrée ──
+                from .models import MouvementStock
+                MouvementStock.objects.create(
+                    stock=stock,
+                    type_mouvement='entree',
+                    motif='arrivage',
+                    quantite=demande.quantite,
+                    effectue_par=request.user,
+                    prix_unitaire=prix_achat,
+                    notes=f"Arrivage confirmé — {demande.employe.username}"
+                )
+
                 for item in demande.imeis_list:
                     imei_code = item.get('imei', '').strip()
                     if imei_code and not SmartphoneIMEI.objects.filter(imei=imei_code).exists():
@@ -1375,3 +1402,192 @@ def depense_supprimer(request, depense_id):
         return redirect('depenses_liste')
 
     return render(request, 'stock/depense_supprimer_confirm.html', {'depense': depense})
+
+from .models import MouvementStock
+
+
+# ── Historique mouvements stock ────────────────────────
+@login_required
+def historique_mouvements(request):
+    boutique = get_boutique_active(request)
+    if not boutique:
+        return redirect('choisir_boutique')
+
+    aujourd_hui = timezone.now().date()
+    date_str = request.GET.get('date', '')
+    type_filtre = request.GET.get('type', '')
+    stock_id = request.GET.get('stock', '')
+
+    mouvements = MouvementStock.objects.filter(
+        stock__boutique=boutique
+    ).select_related('stock__produit__marque', 'effectue_par')
+
+    if date_str:
+        try:
+            from datetime import date as date_type
+            date_filtre = date_type.fromisoformat(date_str)
+            mouvements = mouvements.filter(date_mouvement__date=date_filtre)
+        except ValueError:
+            pass
+
+    if type_filtre:
+        mouvements = mouvements.filter(type_mouvement=type_filtre)
+
+    if stock_id:
+        mouvements = mouvements.filter(stock_id=stock_id)
+
+    # Stats
+    total_entrees = mouvements.filter(type_mouvement='entree').aggregate(
+        t=Sum('quantite'))['t'] or 0
+    total_sorties = mouvements.filter(type_mouvement='sortie').aggregate(
+        t=Sum('quantite'))['t'] or 0
+
+    stocks = StockBoutique.objects.filter(
+        boutique=boutique
+    ).select_related('produit__marque')
+
+    return render(request, 'stock/historique_mouvements.html', {
+        'boutique': boutique,
+        'mouvements': mouvements,
+        'total_entrees': total_entrees,
+        'total_sorties': total_sorties,
+        'date_str': date_str,
+        'type_filtre': type_filtre,
+        'stock_id': stock_id,
+        'stocks': stocks,
+        'aujourd_hui': aujourd_hui,
+    })
+
+# ── Ajouter une marque ─────────────────────────────────
+@login_required
+@proprietaire_requis
+def ajouter_marque(request):
+    if request.method == 'POST':
+        nom = request.POST.get('nom', '').strip()
+        if not nom:
+            messages.error(request, "Le nom est obligatoire.")
+        elif Marque.objects.filter(nom__iexact=nom).exists():
+            messages.error(request, f"La marque « {nom} » existe déjà.")
+        else:
+            Marque.objects.create(nom=nom)
+            messages.success(request, f"Marque « {nom} » ajoutée !")
+        return redirect('gerer_marques_categories')
+
+    return redirect('gerer_marques_categories')
+
+
+# ── Supprimer une marque ───────────────────────────────
+@login_required
+@proprietaire_requis
+def supprimer_marque(request, marque_id):
+    marque = get_object_or_404(Marque, id=marque_id)
+    if request.method == 'POST':
+        try:
+            nom = marque.nom
+            marque.delete()
+            messages.success(request, f"Marque « {nom} » supprimée.")
+        except Exception:
+            messages.error(request, "Impossible de supprimer — des produits utilisent cette marque.")
+    return redirect('gerer_marques_categories')
+
+
+# ── Ajouter une catégorie ──────────────────────────────
+@login_required
+@proprietaire_requis
+def ajouter_categorie(request):
+    if request.method == 'POST':
+        nom = request.POST.get('nom', '').strip()
+        if not nom:
+            messages.error(request, "Le nom est obligatoire.")
+        elif Categorie.objects.filter(nom__iexact=nom).exists():
+            messages.error(request, f"La catégorie « {nom} » existe déjà.")
+        else:
+            Categorie.objects.create(nom=nom)
+            messages.success(request, f"Catégorie « {nom} » ajoutée !")
+        return redirect('gerer_marques_categories')
+
+    return redirect('gerer_marques_categories')
+
+
+# ── Supprimer une catégorie ────────────────────────────
+@login_required
+@proprietaire_requis
+def supprimer_categorie(request, categorie_id):
+    categorie = get_object_or_404(Categorie, id=categorie_id)
+    if request.method == 'POST':
+        try:
+            nom = categorie.nom
+            categorie.delete()
+            messages.success(request, f"Catégorie « {nom} » supprimée.")
+        except Exception:
+            messages.error(request, "Impossible de supprimer — des produits utilisent cette catégorie.")
+    return redirect('gerer_marques_categories')
+
+
+# ── Page principale marques & catégories ──────────────
+@login_required
+@proprietaire_requis
+def gerer_marques_categories(request):
+    boutique = get_boutique_active(request)
+    marques = Marque.objects.annotate(nb_produits=Count('produits')).order_by('nom')
+    categories = Categorie.objects.annotate(nb_produits=Count('produits')).order_by('nom')
+
+    return render(request, 'stock/marques_categories.html', {
+        'marques': marques,
+        'categories': categories,
+        'boutique': boutique,
+    })
+
+from django.template.loader import render_to_string
+from django.http import HttpResponse
+
+
+# ── Export PDF ventes du jour ──────────────────────────
+@login_required
+def export_ventes_pdf(request):
+    boutique = get_boutique_active(request)
+    if not boutique:
+        return redirect('choisir_boutique')
+
+    aujourd_hui = timezone.now().date()
+    date_str = request.GET.get('date', str(aujourd_hui))
+
+    try:
+        from datetime import date as date_type
+        date_filtre = date_type.fromisoformat(date_str)
+    except ValueError:
+        date_filtre = aujourd_hui
+
+    from django.db.models import Q
+    ventes = Vente.objects.filter(
+        boutique=boutique
+    ).filter(
+        Q(date_vente_reelle=date_filtre) |
+        Q(date_vente_reelle__isnull=True, date_vente__date=date_filtre)
+    ).prefetch_related('lignes__stock__produit__marque').order_by('date_vente')
+
+    depenses = Depense.objects.filter(
+        boutique=boutique,
+        date_depense__date=date_filtre
+    ).select_related('enregistre_par')
+
+    total_ca = sum(v.montant_total for v in ventes)
+    total_benefice = sum(v.benefice_total for v in ventes)
+    total_depenses = sum(d.montant for d in depenses)
+    benefice_net = total_benefice - total_depenses
+
+    html = render_to_string('stock/rapport_pdf.html', {
+        'boutique': boutique,
+        'ventes': ventes,
+        'depenses': depenses,
+        'date_filtre': date_filtre,
+        'total_ca': total_ca,
+        'total_benefice': total_benefice,
+        'total_depenses': total_depenses,
+        'benefice_net': benefice_net,
+        'aujourd_hui': aujourd_hui,
+        'request': request,
+    })
+
+    response = HttpResponse(html, content_type='text/html')
+    return response

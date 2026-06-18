@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rapport {{ date_filtre|date:"d/m/Y" }} — {{ boutique.nom }}</title>
+    <style>
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { font-family: Arial, sans-serif; font-size:13px; color:#1a1a2e; background:white; padding:20px; }
+
+        /* ── En-tête ── */
+        .header { text-align:center; border-bottom:3px solid #1a1a2e; padding-bottom:16px; margin-bottom:20px; }
+        .header h1 { font-size:22px; font-weight:800; }
+        .header p { font-size:13px; color:#666; margin-top:4px; }
+
+        /* ── Stats ── */
+        .stats { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-bottom:20px; }
+        .stat { border:2px solid #e5e7eb; border-radius:8px; padding:12px; text-align:center; }
+        .stat .val { font-size:18px; font-weight:800; }
+        .stat .val.vert { color:#10b981; }
+        .stat .val.rouge { color:#ef4444; }
+        .stat .val.bleu { color:#4361ee; }
+        .stat .lbl { font-size:11px; color:#666; margin-top:3px; }
+
+        /* ── Tableau ventes ── */
+        .section-title { font-size:15px; font-weight:700; margin:20px 0 10px; padding:8px 12px; background:#f8fafc; border-left:4px solid #4361ee; }
+        table { width:100%; border-collapse:collapse; margin-bottom:20px; font-size:12px; }
+        th { background:#1a1a2e; color:white; padding:9px 10px; text-align:left; font-size:11px; }
+        td { padding:8px 10px; border-bottom:1px solid #f0f0f0; }
+        tr:nth-child(even) td { background:#f9fafb; }
+        .montant { font-weight:700; text-align:right; }
+        .benefice { color:#10b981; font-weight:700; text-align:right; }
+
+        /* ── Dépenses ── */
+        .depense-row td { background:#fff8f8; }
+
+        /* ── Totaux ── */
+        .total-row td { font-weight:700; font-size:13px; border-top:2px solid #1a1a2e; }
+        .bilan { border:2px solid #1a1a2e; border-radius:8px; padding:16px; margin-top:16px; }
+        .bilan-row { display:flex; justify-content:space-between; padding:5px 0; font-size:13px; }
+        .bilan-total { display:flex; justify-content:space-between; font-size:18px; font-weight:800; padding-top:10px; margin-top:8px; border-top:2px solid #1a1a2e; }
+
+        /* ── Footer ── */
+        .footer { text-align:center; margin-top:30px; padding-top:16px; border-top:1px solid #e5e7eb; font-size:11px; color:#aaa; }
+
+        /* ── Bouton impression ── */
+        .print-btn { position:fixed; bottom:24px; right:24px; padding:14px 28px; background:#4361ee; color:white; border:none; border-radius:12px; font-size:15px; font-weight:700; cursor:pointer; box-shadow:0 4px 20px rgba(67,97,238,.4); z-index:1000; }
+        .close-btn { position:fixed; bottom:24px; right:200px; padding:14px 28px; background:#e5e7eb; color:#444; border:none; border-radius:12px; font-size:15px; font-weight:700; cursor:pointer; z-index:1000; }
+
+        @media print {
+            .print-btn, .close-btn { display:none !important; }
+            body { padding:10px; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- Boutons -->
+<button class="print-btn" onclick="window.print()">🖨️ Imprimer / Enregistrer PDF</button>
+<button class="close-btn" onclick="window.history.back()">← Retour</button>
+
+<!-- En-tête -->
+<div class="header">
+    <h1>📦 {{ boutique.nom }}</h1>
+    <p>Rapport de ventes — {{ date_filtre|date:"l d F Y" }}</p>
+    <p style="font-size:11px; color:#aaa; margin-top:4px;">Généré le {{ aujourd_hui|date:"d/m/Y" }}</p>
+</div>
+
+<!-- Stats -->
+<div class="stats">
+    <div class="stat">
+        <div class="val bleu">{{ ventes.count }}</div>
+        <div class="lbl">Ventes</div>
+    </div>
+    <div class="stat">
+        <div class="val bleu">{{ total_ca|floatformat:0 }}</div>
+        <div class="lbl">CA (F)</div>
+    </div>
+    {% load stock_tags %}
+    {% if request.user|est_proprietaire %}
+    <div class="stat">
+        <div class="val vert">{{ total_benefice|floatformat:0 }}</div>
+        <div class="lbl">Bénéfice brut (F)</div>
+    </div>
+    <div class="stat">
+        <div class="val {% if benefice_net >= 0 %}vert{% else %}rouge{% endif %}">
+            {{ benefice_net|floatformat:0 }}
+        </div>
+        <div class="lbl">Bénéfice net (F)</div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Liste des ventes -->
+<div class="section-title">✅ Ventes du jour ({{ ventes.count }})</div>
+
+{% if ventes %}
+<table>
+    <thead>
+        <tr>
+            <th>#</th>
+            <th>Heure</th>
+            <th>Produits</th>
+            <th>Client</th>
+            <th>Paiement</th>
+            <th style="text-align:right">Montant</th>
+            {% if request.user|est_proprietaire %}
+            <th style="text-align:right">Bénéfice</th>
+            {% endif %}
+        </tr>
+    </thead>
+    <tbody>
+        {% for vente in ventes %}
+        <tr>
+            <td style="color:#4361ee; font-weight:700;">
+                #{{ vente.reference|stringformat:"s"|slice:":8"|upper }}
+            </td>
+            <td>
+                {% if vente.date_vente_reelle %}
+                    {{ vente.date_vente_reelle|date:"d/m/Y" }}
+                {% else %}
+                    {{ vente.date_vente|date:"H:i" }}
+                {% endif %}
+            </td>
+            <td>
+                {% for ligne in vente.lignes.all %}
+                    {{ ligne.stock.produit.marque }} {{ ligne.stock.produit.nom }} x{{ ligne.quantite }}<br>
+                {% endfor %}
+            </td>
+            <td>{{ vente.nom_client|default:"—" }}</td>
+            <td>{{ vente.get_mode_paiement_display }}</td>
+            <td class="montant">{{ vente.montant_total|floatformat:0 }} F</td>
+            {% if request.user|est_proprietaire %}
+            <td class="benefice">{{ vente.benefice_total|floatformat:0 }} F</td>
+            {% endif %}
+        </tr>
+        {% endfor %}
+        <tr class="total-row">
+            <td colspan="5">TOTAL</td>
+            <td class="montant">{{ total_ca|floatformat:0 }} F</td>
+            {% if request.user|est_proprietaire %}
+            <td class="benefice">{{ total_benefice|floatformat:0 }} F</td>
+            {% endif %}
+        </tr>
+    </tbody>
+</table>
+{% else %}
+<p style="text-align:center; color:#aaa; padding:30px;">Aucune vente ce jour.</p>
+{% endif %}
+
+<!-- Dépenses -->
+{% if depenses %}
+<div class="section-title">💸 Dépenses du jour ({{ depenses.count }})</div>
+<table>
+    <thead>
+        <tr>
+            <th>Heure</th>
+            <th>Motif</th>
+            <th>Enregistré par</th>
+            <th style="text-align:right">Montant</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for d in depenses %}
+        <tr class="depense-row">
+            <td>{{ d.date_depense|date:"H:i" }}</td>
+            <td>{{ d.motif }}</td>
+            <td>{{ d.enregistre_par.username }}</td>
+            <td class="montant" style="color:#ef4444;">-{{ d.montant|floatformat:0 }} F</td>
+        </tr>
+        {% endfor %}
+        <tr class="total-row">
+            <td colspan="3">TOTAL DÉPENSES</td>
+            <td class="montant" style="color:#ef4444;">-{{ total_depenses|floatformat:0 }} F</td>
+        </tr>
+    </tbody>
+</table>
+{% endif %}
+
+<!-- Bilan final (propriétaire uniquement) -->
+{% if request.user|est_proprietaire %}
+<div class="bilan">
+    <div class="bilan-row">
+        <span>Chiffre d'affaires</span>
+        <strong>{{ total_ca|floatformat:0 }} F</strong>
+    </div>
+    <div class="bilan-row">
+        <span>Bénéfice brut ventes</span>
+        <strong style="color:#10b981;">+{{ total_benefice|floatformat:0 }} F</strong>
+    </div>
+    <div class="bilan-row">
+        <span>Total dépenses</span>
+        <strong style="color:#ef4444;">-{{ total_depenses|floatformat:0 }} F</strong>
+    </div>
+    <div class="bilan-total">
+        <span>Bénéfice net du jour</span>
+        <span style="color:{% if benefice_net >= 0 %}#10b981{% else %}#ef4444{% endif %}">
+            {{ benefice_net|floatformat:0 }} F
+        </span>
+    </div>
+</div>
+{% endif %}
+
+<div class="footer">
+    <p>{{ boutique.nom }} · Rapport du {{ date_filtre|date:"d/m/Y" }}</p>
+    <p>StockManager — Application de gestion de stock</p>
+</div>
+
+</body>
+</html>

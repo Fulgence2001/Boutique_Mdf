@@ -35,7 +35,14 @@
         <h1>📋 Historique des Ventes</h1>
         <p style="color:#666; font-size:13px">{{ boutique.nom }}</p>
     </div>
-    <a href="{% url 'pos' %}" class="btn btn-primary">🛒 Caisse</a>
+<div style="display:flex; gap:8px; flex-wrap:wrap;">
+        <a href="{% url 'export_ventes_pdf' %}?date={{ date_filtre|date:'Y-m-d' }}"
+           class="btn" style="background:#ef4444; color:white;"
+           target="_blank">
+            📄 Exporter PDF
+        </a>
+        <a href="{% url 'pos' %}" class="btn btn-primary">🛒 Caisse</a>
+    </div>
 </div>
 
 <!-- Stats : masquer bénéfice pour employé -->
@@ -70,8 +77,14 @@
         <div class="vente-card-header">
             <div>
                 <span class="vente-ref"># {{ vente.reference|stringformat:"s"|slice:":8"|upper }}</span>
-                <span class="vente-meta"> · {{ vente.date_vente|date:"H:i" }} · {{ vente.vendeur.username }}</span>
-            </div>
+                <span class="vente-meta"> · 
+                    {% if vente.date_vente_reelle %}
+                        {{ vente.date_vente_reelle|date:"d/m/Y" }} (antérieure)
+                    {% else %}
+                        {{ vente.date_vente|date:"H:i" }}
+                    {% endif %}
+                    · {{ vente.vendeur.username }}</span>
+</div>
             <div style="display:flex; gap:8px; align-items:center;">
                 <span class="badge-paiement">{{ vente.get_mode_paiement_display }}</span>
                 <a href="{% url 'vente_detail' vente.id %}" class="btn" style="background:#f0f4ff; color:#4361ee; padding:5px 12px; font-size:12px;">Voir</a>

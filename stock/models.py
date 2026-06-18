@@ -178,7 +178,6 @@ class SmartphoneIMEI(models.Model):
 # 7. VENTE
 # ──────────────────────────────────────────
 class Vente(models.Model):
-    """Enregistre une transaction complète."""
     PAIEMENT_CHOICES = [
         ('especes', 'Espèces'),
         ('mobile_money', 'Mobile Money'),
@@ -189,6 +188,10 @@ class Vente(models.Model):
     boutique = models.ForeignKey(Boutique, on_delete=models.PROTECT, related_name='ventes')
     vendeur = models.ForeignKey(User, on_delete=models.PROTECT, related_name='ventes')
     date_vente = models.DateTimeField(auto_now_add=True)
+    date_vente_reelle = models.DateField(   # ← AJOUTE CE CHAMP
+        null=True, blank=True,
+        help_text="Date réelle de la vente si différente d'aujourd'hui"
+    )
     mode_paiement = models.CharField(max_length=20, choices=PAIEMENT_CHOICES, default='especes')
     nom_client = models.CharField(max_length=100, blank=True)
     telephone_client = models.CharField(max_length=20, blank=True)
@@ -337,3 +340,38 @@ class Depense(models.Model):
 
     def __str__(self):
         return f"{self.motif} — {self.montant} F"
+    
+class MouvementStock(models.Model):
+    TYPE_CHOICES = [
+        ('entree', 'Entrée'),
+        ('sortie', 'Sortie'),
+    ]
+    MOTIF_CHOICES = [
+        ('arrivage', 'Arrivage'),
+        ('vente', 'Vente'),
+        ('retour', 'Retour'),
+        ('correction', 'Correction manuelle'),
+        ('perte', 'Perte / Casse'),
+    ]
+    stock = models.ForeignKey(
+        StockBoutique, on_delete=models.CASCADE, related_name='mouvements'
+    )
+    type_mouvement = models.CharField(max_length=10, choices=TYPE_CHOICES)
+    motif = models.CharField(max_length=20, choices=MOTIF_CHOICES)
+    quantite = models.PositiveIntegerField()
+    date_mouvement = models.DateTimeField(auto_now_add=True)
+    effectue_par = models.ForeignKey(
+        User, on_delete=models.PROTECT, related_name='mouvements'
+    )
+    notes = models.CharField(max_length=255, blank=True)
+    prix_unitaire = models.DecimalField(
+        max_digits=10, decimal_places=0,
+        null=True, blank=True
+    )
+
+    class Meta:
+        ordering = ['-date_mouvement']
+        verbose_name = "Mouvement de stock"
+
+    def __str__(self):
+        return f"{self.get_type_mouvement_display()} — {self.stock.produit} — {self.quantite}"

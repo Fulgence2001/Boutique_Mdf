@@ -51,10 +51,16 @@
 {% block content %}
 <div class="page-header">
     <div>
-        <h1>📒 Caisse du jour</h1>
+        <h1>💸 Dépenses</h1>
         <p style="color:#666; font-size:13px;">{{ boutique.nom }}</p>
     </div>
-    <a href="{% url 'depense_ajouter' %}" class="btn btn-rouge">+ Dépense</a>
+    <div style="display:flex; gap:8px; flex-wrap:wrap;">
+        <a href="{% url 'export_ventes_pdf' %}?date={{ date_filtre|date:'Y-m-d' }}"
+           class="btn" style="background:#ef4444; color:white;" target="_blank">
+            📄 PDF du jour
+        </a>
+        <a href="{% url 'depense_ajouter' %}" class="btn btn-rouge">+ Dépense</a>
+    </div>
 </div>
 
 <!-- Navigation date -->

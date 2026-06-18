@@ -1,0 +1,115 @@
+{% extends 'stock/base.html' %}
+{% block title %}Marques & Catégories{% endblock %}
+
+{% block extra_css %}
+<style>
+    .page-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:24px; flex-wrap:wrap; gap:12px; }
+    .grid { display:grid; grid-template-columns:1fr 1fr; gap:20px; }
+    .card { background:white; border-radius:14px; padding:24px; box-shadow:0 2px 14px rgba(0,0,0,.07); }
+    .card h2 { font-size:17px; font-weight:700; margin-bottom:20px; padding-bottom:12px; border-bottom:2px solid #f0f0f0; display:flex; justify-content:space-between; align-items:center; }
+    .add-form { display:flex; gap:10px; margin-bottom:20px; }
+    .add-form input { flex:1; padding:11px 14px; border:2px solid #e5e7eb; border-radius:10px; font-size:14px; }
+    .add-form input:focus { outline:none; border-color:#4361ee; }
+    .btn { padding:10px 18px; border:none; border-radius:8px; font-size:13px; font-weight:600; cursor:pointer; text-decoration:none; display:inline-block; }
+    .btn-primary { background:#4361ee; color:white; }
+    .btn-danger { background:#fee2e2; color:#dc2626; }
+    .btn-sm { padding:5px 12px; font-size:12px; }
+    .item-row { display:flex; justify-content:space-between; align-items:center; padding:11px 0; border-bottom:1px solid #f5f5f5; }
+    .item-row:last-child { border-bottom:none; }
+    .item-nom { font-size:14px; font-weight:600; }
+    .item-count { font-size:12px; color:#888; margin-top:2px; }
+    .badge-count { background:#f0f4ff; color:#4361ee; border-radius:20px; padding:2px 10px; font-size:12px; font-weight:600; }
+    .empty-list { text-align:center; padding:30px; color:#aaa; font-size:13px; }
+    @media(max-width:700px){ .grid { grid-template-columns:1fr; } }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1>🏷️ Marques & Catégories</h1>
+        <p style="color:#666; font-size:13px;">Gérez votre catalogue de base</p>
+    </div>
+    <a href="{% url 'stock_liste' %}" class="btn" style="background:#e5e7eb;color:#444;">← Stock</a>
+</div>
+
+<div class="grid">
+
+    <!-- ── MARQUES ── -->
+    <div class="card">
+        <h2>
+            📱 Marques
+            <span class="badge-count">{{ marques.count }}</span>
+        </h2>
+
+        <!-- Formulaire ajout -->
+        <form method="post" action="{% url 'ajouter_marque' %}" class="add-form">
+            {% csrf_token %}
+            <input type="text" name="nom" placeholder="Ex: Infinix, Tecno, Samsung..." required>
+            <button type="submit" class="btn btn-primary">+ Ajouter</button>
+        </form>
+
+        <!-- Liste -->
+        {% if marques %}
+            {% for marque in marques %}
+            <div class="item-row">
+                <div>
+                    <div class="item-nom">{{ marque.nom }}</div>
+                    <div class="item-count">{{ marque.nb_produits }} produit(s)</div>
+                </div>
+                {% if marque.nb_produits == 0 %}
+                <form method="post" action="{% url 'supprimer_marque' marque.id %}"
+                      onsubmit="return confirm('Supprimer {{ marque.nom }} ?')">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger btn-sm">🗑</button>
+                </form>
+                {% else %}
+                <span style="font-size:12px; color:#aaa;">En usage</span>
+                {% endif %}
+            </div>
+            {% endfor %}
+        {% else %}
+        <div class="empty-list">Aucune marque — ajoutez-en une !</div>
+        {% endif %}
+    </div>
+
+    <!-- ── CATÉGORIES ── -->
+    <div class="card">
+        <h2>
+            📂 Catégories
+            <span class="badge-count">{{ categories.count }}</span>
+        </h2>
+
+        <!-- Formulaire ajout -->
+        <form method="post" action="{% url 'ajouter_categorie' %}" class="add-form">
+            {% csrf_token %}
+            <input type="text" name="nom" placeholder="Ex: Smartphone, Accessoire..." required>
+            <button type="submit" class="btn btn-primary">+ Ajouter</button>
+        </form>
+
+        <!-- Liste -->
+        {% if categories %}
+            {% for categorie in categories %}
+            <div class="item-row">
+                <div>
+                    <div class="item-nom">{{ categorie.nom }}</div>
+                    <div class="item-count">{{ categorie.nb_produits }} produit(s)</div>
+                </div>
+                {% if categorie.nb_produits == 0 %}
+                <form method="post" action="{% url 'supprimer_categorie' categorie.id %}"
+                      onsubmit="return confirm('Supprimer {{ categorie.nom }} ?')">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger btn-sm">🗑</button>
+                </form>
+                {% else %}
+                <span style="font-size:12px; color:#aaa;">En usage</span>
+                {% endif %}
+            </div>
+            {% endfor %}
+        {% else %}
+        <div class="empty-list">Aucune catégorie — ajoutez-en une !</div>
+        {% endif %}
+    </div>
+
+</div>
+{% endblock %}

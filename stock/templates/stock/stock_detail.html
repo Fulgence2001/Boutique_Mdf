@@ -37,7 +37,10 @@
 
 {% block content %}
 <a href="{% url 'stock_liste' %}" style="color:#666; font-size:14px; text-decoration:none;">← Retour au stock</a>
-
+<a href="{% url 'historique_mouvements' %}?stock={{ stock.pk }}" 
+   class="btn" style="background:#e0e7ff;color:#4361ee;">
+   📊 Voir mouvements
+</a>
 <div class="header-produit" style="margin-top:16px">
     <div>
         <h1>{{ stock.produit }}</h1>

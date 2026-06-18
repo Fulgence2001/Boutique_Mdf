@@ -27,7 +27,7 @@
 
 {% if user.is_authenticated %}
 <nav class="navbar">
-    <strong>📦 MON DESTIN FIRST</strong>
+    <strong>📦 AFES GESTION</strong>
     <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
         {% if request.session.boutique_active_nom %}
             <span class="boutique-badge">🏪 {{ request.session.boutique_active_nom }}</span>
@@ -56,6 +56,9 @@
         <a href="{% url 'choisir_boutique' %}">
             {% if user.profil.est_proprietaire %}Boutiques{% endif %}
         </a>
+        <a href="{% url 'historique_mouvements' %}">📊 Mouvements</a>
+
+        <a href="{% url 'gerer_marques_categories' %}">🏷️ Catalogue</a>
         <a href="{% url 'deconnexion' %}">Déconnexion</a>
     </div>
 </nav>

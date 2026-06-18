@@ -1,0 +1,116 @@
+{% extends 'stock/base.html' %}
+{% load stock_tags %}
+{% block title %}Historique Mouvements{% endblock %}
+
+{% block extra_css %}
+<style>
+    .page-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; flex-wrap:wrap; gap:12px; }
+    .stats-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(160px,1fr)); gap:12px; margin-bottom:24px; }
+    .stat-card { background:white; border-radius:12px; padding:16px; text-align:center; box-shadow:0 2px 10px rgba(0,0,0,.06); border-top:3px solid transparent; }
+    .stat-card.vert { border-top-color:#10b981; }
+    .stat-card.rouge { border-top-color:#ef4444; }
+    .stat-card .val { font-size:24px; font-weight:800; }
+    .stat-card .val.vert { color:#10b981; }
+    .stat-card .val.rouge { color:#ef4444; }
+    .stat-card .lbl { font-size:12px; color:#666; margin-top:4px; }
+    .filtres { background:white; border-radius:12px; padding:16px; margin-bottom:20px; display:flex; gap:10px; flex-wrap:wrap; box-shadow:0 2px 10px rgba(0,0,0,.06); }
+    .filtres input, .filtres select { padding:9px 14px; border:2px solid #e5e7eb; border-radius:8px; font-size:14px; }
+    .filtres input:focus, .filtres select:focus { outline:none; border-color:#4361ee; }
+    .btn { padding:9px 18px; border:none; border-radius:8px; font-size:13px; font-weight:600; cursor:pointer; text-decoration:none; display:inline-block; }
+    .btn-primary { background:#4361ee; color:white; }
+    .card { background:white; border-radius:14px; padding:20px; box-shadow:0 2px 14px rgba(0,0,0,.07); }
+    .mouvement-item { display:flex; justify-content:space-between; align-items:center; padding:13px 0; border-bottom:1px solid #f5f5f5; gap:12px; }
+    .mouvement-item:last-child { border-bottom:none; }
+    .mouvement-gauche { flex:1; }
+    .mouvement-date { font-size:11px; color:#aaa; margin-bottom:3px; }
+    .mouvement-produit { font-size:14px; font-weight:600; margin-bottom:2px; }
+    .mouvement-notes { font-size:12px; color:#888; }
+    .badge { padding:3px 12px; border-radius:20px; font-size:12px; font-weight:700; }
+    .badge-entree { background:#d1fae5; color:#065f46; }
+    .badge-sortie { background:#fee2e2; color:#991b1b; }
+    .mouvement-qte { font-size:18px; font-weight:800; }
+    .qte-entree { color:#10b981; }
+    .qte-sortie { color:#ef4444; }
+    .empty { text-align:center; padding:50px; color:#aaa; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1>📊 Mouvements de Stock</h1>
+        <p style="color:#666; font-size:13px;">{{ boutique.nom }} — Entrées & Sorties</p>
+    </div>
+    <a href="{% url 'stock_liste' %}" class="btn" style="background:#e5e7eb; color:#444;">← Stock</a>
+</div>
+
+<!-- Stats -->
+<div class="stats-grid">
+    <div class="stat-card vert">
+        <div class="val vert">+{{ total_entrees }}</div>
+        <div class="lbl">Total entrées</div>
+    </div>
+    <div class="stat-card rouge">
+        <div class="val rouge">-{{ total_sorties }}</div>
+        <div class="lbl">Total sorties</div>
+    </div>
+    <div class="stat-card">
+        <div class="val">{{ mouvements.count }}</div>
+        <div class="lbl">Mouvements</div>
+    </div>
+</div>
+
+<!-- Filtres -->
+<form method="get" class="filtres">
+    <input type="date" name="date" value="{{ date_str }}" placeholder="Date">
+    <select name="type">
+        <option value="">Tous types</option>
+        <option value="entree" {% if type_filtre == 'entree' %}selected{% endif %}>✅ Entrées</option>
+        <option value="sortie" {% if type_filtre == 'sortie' %}selected{% endif %}>🔴 Sorties</option>
+    </select>
+    <select name="stock">
+        <option value="">Tous produits</option>
+        {% for s in stocks %}
+        <option value="{{ s.id }}" {% if stock_id == s.id|stringformat:"s" %}selected{% endif %}>
+            {{ s.produit }}
+        </option>
+        {% endfor %}
+    </select>
+    <button type="submit" class="btn btn-primary">Filtrer</button>
+    <a href="{% url 'historique_mouvements' %}" class="btn" style="background:#e5e7eb;color:#444;">Tout voir</a>
+</form>
+
+<!-- Liste mouvements -->
+<div class="card">
+    {% if mouvements %}
+        {% for m in mouvements %}
+        <div class="mouvement-item">
+            <div class="mouvement-gauche">
+                <div class="mouvement-date">
+                    {{ m.date_mouvement|date:"d/m/Y à H:i" }} · {{ m.effectue_par.username }}
+                </div>
+                <div class="mouvement-produit">
+                    <span class="badge {% if m.type_mouvement == 'entree' %}badge-entree{% else %}badge-sortie{% endif %}">
+                        {% if m.type_mouvement == 'entree' %}↑ Entrée{% else %}↓ Sortie{% endif %}
+                    </span>
+                    &nbsp;{{ m.stock.produit }}
+                </div>
+                <div class="mouvement-notes">
+                    {{ m.get_motif_display }}
+                    {% if m.notes %} · {{ m.notes }}{% endif %}
+                    {% if m.prix_unitaire %} · {{ m.prix_unitaire|floatformat:0 }} F/u{% endif %}
+                </div>
+            </div>
+            <div class="mouvement-qte {% if m.type_mouvement == 'entree' %}qte-entree{% else %}qte-sortie{% endif %}">
+                {% if m.type_mouvement == 'entree' %}+{% else %}-{% endif %}{{ m.quantite }}
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+    <div class="empty">
+        <p style="font-size:36px">📭</p>
+        <p>Aucun mouvement trouvé.</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

@@ -36,7 +36,13 @@
     <div class="recu-header">
         <h1>✅</h1>
         <h2>Vente validée !</h2>
-        <p>{{ boutique.nom }} · {{ vente.date_vente|date:"d/m/Y à H:i" }}</p>
+        <p>{{ boutique.nom }} · 
+            {% if vente.date_vente_reelle %}
+                {{ vente.date_vente_reelle|date:"d/m/Y" }}
+            {% else %}
+                {{ vente.date_vente|date:"d/m/Y à H:i" }}
+            {% endif %}
+            </p>
     </div>
 
     <div class="recu-ref"># {{ vente.reference|stringformat:"s"|slice:":8"|upper }}</div>
