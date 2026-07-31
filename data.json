@@ -1,0 +1,136 @@
+[
+{
+  "model": "auth.user",
+  "fields": {
+    "password": "pbkdf2_sha256$1200000$uZ6ZhrKGOKLgUIDNYzkIXW$hH2l9HNF9YjdFZoX+Ngt36t++uE5FrICTpQWwcZCOFo=",
+    "last_login": "2026-07-30T19:20:06.271Z",
+    "is_superuser": true,
+    "username": "Admin",
+    "first_name": "",
+    "last_name": "",
+    "email": "Fulgenciokeaton01@gmail.com",
+    "is_staff": true,
+    "is_active": true,
+    "date_joined": "2026-07-30T19:11:03.868Z",
+    "groups": [],
+    "user_permissions": []
+  }
+},
+{
+  "model": "auth.user",
+  "fields": {
+    "password": "pbkdf2_sha256$1200000$VQOLhtYv4FTOsoyVyNcwxi$hHOztma6PJN/bO+HnnHef1DXuDMFN5Qxd/nWvfKAD4k=",
+    "last_login": null,
+    "is_superuser": false,
+    "username": "Marius",
+    "first_name": "",
+    "last_name": "",
+    "email": "",
+    "is_staff": false,
+    "is_active": true,
+    "date_joined": "2026-07-30T19:22:17.922Z",
+    "groups": [],
+    "user_permissions": []
+  }
+},
+{
+  "model": "sessions.session",
+  "pk": "84kyycb3lyboklbkemfox4tggbf4sr0f",
+  "fields": {
+    "session_data": ".eJxVjDsOAiEUAO9CbQggX0t7z0Aej4esGkiW3cp4d0OyhbYzk3mzCPtW4z5ojUtmFybZ6ZclwCe1KfID2r1z7G1bl8Rnwg87-K1nel2P9m9QYdS5RSkkkjPKeC1NIioevBUynNFBsaiC1qKorI1HW7wIhUJWEpLKKgjHPl_Qjzd2:1wpWIY:HtrgfGdXWzrdCiZjx_ztRJz5nYPs34tlCTsre-Yma5Y",
+    "expire_date": "2026-07-31T03:20:06.276Z"
+  }
+},
+{
+  "model": "stock.boutique",
+  "pk": 1,
+  "fields": {
+    "nom": "Cocotomey Shop",
+    "adresse": "Cocotomey",
+    "telephone": "0197383860",
+    "proprietaire": [
+      "Admin"
+    ],
+    "date_creation": "2026-07-30T19:22:30.221Z",
+    "est_active": true
+  }
+},
+{
+  "model": "stock.profilemploye",
+  "pk": 1,
+  "fields": {
+    "user": [
+      "Admin"
+    ],
+    "boutique": null,
+    "role": "employe",
+    "telephone": ""
+  }
+},
+{
+  "model": "stock.profilemploye",
+  "pk": 2,
+  "fields": {
+    "user": [
+      "Marius"
+    ],
+    "boutique": null,
+    "role": "employe",
+    "telephone": ""
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 1,
+  "fields": {
+    "action_time": "2026-07-30T19:22:18.073Z",
+    "user": [
+      "Admin"
+    ],
+    "content_type": [
+      "auth",
+      "user"
+    ],
+    "object_id": "2",
+    "object_repr": "Marius",
+    "action_flag": 1,
+    "change_message": "[{\"added\": {}}]"
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 2,
+  "fields": {
+    "action_time": "2026-07-30T19:22:30.222Z",
+    "user": [
+      "Admin"
+    ],
+    "content_type": [
+      "stock",
+      "boutique"
+    ],
+    "object_id": "1",
+    "object_repr": "Cocotomey Shop",
+    "action_flag": 1,
+    "change_message": "[{\"added\": {}}]"
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 3,
+  "fields": {
+    "action_time": "2026-07-30T19:23:42.793Z",
+    "user": [
+      "Admin"
+    ],
+    "content_type": [
+      "stock",
+      "boutique"
+    ],
+    "object_id": "1",
+    "object_repr": "Cocotomey Shop",
+    "action_flag": 2,
+    "change_message": "[{\"changed\": {\"fields\": [\"Proprietaire\"]}}]"
+  }
+}
+]
