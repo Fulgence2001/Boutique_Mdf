@@ -1,0 +1,1009 @@
+[
+{
+  "model": "auth.user",
+  "fields": {
+    "password": "pbkdf2_sha256$1200000$AOJLeR2gvlU4AYy6JWpqIP$CnOeDNGuTsC7kWjJrsSW/Qs0CaWu93y4xeETkmQ3gfw=",
+    "last_login": "2026-07-30T19:02:56.130Z",
+    "is_superuser": true,
+    "username": "Admin",
+    "first_name": "",
+    "last_name": "",
+    "email": "fulgenciokeaton01@gmail.com",
+    "is_staff": true,
+    "is_active": true,
+    "date_joined": "2026-04-30T13:52:25.033Z",
+    "groups": [],
+    "user_permissions": []
+  }
+},
+{
+  "model": "auth.user",
+  "fields": {
+    "password": "pbkdf2_sha256$1200000$vE33HHm2dbifHlzEekD2US$/WlPwohZryszTparDeGB0+xAMbxSt4K+4KDmnSpXEpk=",
+    "last_login": "2026-04-30T22:14:21.792Z",
+    "is_superuser": false,
+    "username": "boutique_cocotomey",
+    "first_name": "",
+    "last_name": "",
+    "email": "",
+    "is_staff": false,
+    "is_active": true,
+    "date_joined": "2026-04-30T22:13:46.062Z",
+    "groups": [],
+    "user_permissions": []
+  }
+},
+{
+  "model": "auth.user",
+  "fields": {
+    "password": "pbkdf2_sha256$1200000$joKnhP7EBW9i6oETEl4qVh$VZ/E5xTpsH83IanEdhex52tqjI7GrPCQn6YdW70G3po=",
+    "last_login": "2026-05-01T21:00:28.032Z",
+    "is_superuser": false,
+    "username": "Rebecca",
+    "first_name": "Rébecca",
+    "last_name": "",
+    "email": "",
+    "is_staff": false,
+    "is_active": true,
+    "date_joined": "2026-05-01T16:06:53.932Z",
+    "groups": [],
+    "user_permissions": []
+  }
+},
+{
+  "model": "auth.user",
+  "fields": {
+    "password": "pbkdf2_sha256$1200000$PGThpFnKjRi5GKiADqNvNH$vbwMnKxH99zLEcZJnjVEmfnn2fvCL1+Em6s6BpwdXl0=",
+    "last_login": null,
+    "is_superuser": false,
+    "username": "Chrismelle",
+    "first_name": "Chrismelle",
+    "last_name": "",
+    "email": "",
+    "is_staff": false,
+    "is_active": true,
+    "date_joined": "2026-05-02T16:22:58.963Z",
+    "groups": [],
+    "user_permissions": []
+  }
+},
+{
+  "model": "auth.user",
+  "fields": {
+    "password": "pbkdf2_sha256$1200000$EvidUxZwAKaCt1bR7tPnNK$ZDV3aoz5TSafFnacgduVBis2Qsdkze17ql5iv9OYGsI=",
+    "last_login": "2026-07-30T17:57:59.361Z",
+    "is_superuser": true,
+    "username": "Marius",
+    "first_name": "PDG",
+    "last_name": "MON DESTIN FIRST",
+    "email": "Admin@gmail.com",
+    "is_staff": true,
+    "is_active": true,
+    "date_joined": "2026-05-04T23:03:47Z",
+    "groups": [],
+    "user_permissions": []
+  }
+},
+{
+  "model": "auth.user",
+  "fields": {
+    "password": "pbkdf2_sha256$1200000$fkT1iXJtxElAvxluHG5fjd$85/A+YD2avsnhAHyA2kILg7IOwrxFnkPMqoYKRClK6k=",
+    "last_login": null,
+    "is_superuser": true,
+    "username": "Mondestinfirst12345",
+    "first_name": "",
+    "last_name": "",
+    "email": "Mondestinfirst@gmail.com",
+    "is_staff": true,
+    "is_active": true,
+    "date_joined": "2026-05-04T23:10:16.181Z",
+    "groups": [],
+    "user_permissions": []
+  }
+},
+{
+  "model": "sessions.session",
+  "pk": "3w3hcou3x333a526zbih1jlq9a9w7t2t",
+  "fields": {
+    "session_data": ".eJxljkEOgjAQRa9iZk1IgUKBpa5deQAynU4FFUahmBjj3Q2Ghcbtey8__wkNzqFt5onHpnNQQwLRN7NIZx4W4U44HCUmGcLY2XhJ4tVO8V4cX7Zr-zPQ4tRCDWnB2qdcIvmMM5Ur78jarLJGV-S01qriShmXZ9phgmS8Q1WmbPLSeCpSiMDKHLrbzA1S6O78uZv840F6qGEnJEF6fmwOrVzh9QZqrU8E:1wJD6w:EvR5fup74elequ6vJoLWqETVJnLwDqV0tKzFr7sPUoc",
+    "expire_date": "2026-05-03T00:22:34.432Z"
+  }
+},
+{
+  "model": "sessions.session",
+  "pk": "5oydmnq3spmr0u5qoirn4qc7zboypqsu",
+  "fields": {
+    "session_data": ".eJxljkEOgjAQRa9iZk1IgUKBpa5deQAynU4FFUahmBjj3Q2Ghcbtey8__wkNzqFt5onHpnNQQwLRN7NIZx4W4U44HCUmGcLY2XhJ4tVO8V4cX7Zr-zPQ4tRCDWnB2qdcIvmMM5Ur78jarLJGV-S01qriShmXZ9phgmS8Q1WmbPLSeCpSiMDKHLrbzA1S6O78uZv840F6qGEnJEF6fmwOrVzh9QZqrU8E:1wVSa0:gCYg-4KdKDOicNO7ir_QrXNnkWXp3sZ_H1ZvvIlXPLc",
+    "expire_date": "2026-06-05T19:19:12.851Z"
+  }
+},
+{
+  "model": "sessions.session",
+  "pk": "7mypx0bs5e35x6j5ablkvt5rgsh8aslo",
+  "fields": {
+    "session_data": ".eJxljkEOgjAQRa9iZk1IgUKBpa5deQAynU4FFUahmBjj3Q2Ghcbtey8__wkNzqFt5onHpnNQQwLRN7NIZx4W4U44HCUmGcLY2XhJ4tVO8V4cX7Zr-zPQ4tRCDWnB2qdcIvmMM5Ur78jarLJGV-S01qriShmXZ9phgmS8Q1WmbPLSeCpSiMDKHLrbzA1S6O78uZv840F6qGEnJEF6fmwOrVzh9QZqrU8E:1wK1gF:0lzjEH_3d0vtqLEj9dWw0OyToCvHJ_rBvqs4r1ie6pQ",
+    "expire_date": "2026-05-05T06:22:23.318Z"
+  }
+},
+{
+  "model": "sessions.session",
+  "pk": "e5xn7sygfmvhydl9gpqwoa6035c39dqs",
+  "fields": {
+    "session_data": ".eJxljssOgjAQRX_FzJqQ0gcUlrp25Qc0QzsIKoxCMTHGfzcYFhq355zc3Cc4nGPr5olG1wWoQEHyzWr0ZxoWEU44HDn1PMSxq9MlSVc7pXsOdNmu7c9Ai1MLFVAQ2jeNyDLMyVtVqhA05mipKHJViqb0WuRSorXaFFKGYIREpbVqMmONhwRqnmN3m8mhj92dPnezfzxwDxXs2HPknh6bQ8tXeL0BDZ1N3w:1wIuyK:OmY6zShF5ldVSKoxe71RH1v1l2Aeryj5UWDJMgKahSY",
+    "expire_date": "2026-05-02T05:00:28.073Z"
+  }
+},
+{
+  "model": "sessions.session",
+  "pk": "o0dyivhqn4lb361hb8vn5hzatptaru8m",
+  "fields": {
+    "session_data": ".eJxVjDEOgzAMAP_iuYpC4hDC2L1vQI7tFNoKJAJT1b9XSAztene6Nwy0b-OwV12HSaCHBi6_LBM_dT6EPGi-L4aXeVunbI7EnLaa2yL6up7t32CkOkIPrlUsTjvi4tXbYItwzj7liIkFEW3SZKMEj0INcSxCtnMaQxcLtw4-X_zpOGg:1waFr4:FR6-VxMgTFOsNJuycIhLOPYbF4Hi03vfejOW1wQSKsY",
+    "expire_date": "2026-06-19T00:44:38.810Z"
+  }
+},
+{
+  "model": "sessions.session",
+  "pk": "zmt9uamc4or70s3pjlh048zy3mpfxmvn",
+  "fields": {
+    "session_data": ".eJxVjDEOgzAMAP_iuYpC4hDC2L1vQI7tFNoKJAJT1b9XSAztene6Nwy0b-OwV12HSaCHBi6_LBM_dT6EPGi-L4aXeVunbI7EnLaa2yL6up7t32CkOkIPrlUsTjvi4tXbYItwzj7liIkFEW3SZKMEj0INcSxCtnMaQxcLtw4-X_zpOGg:1wpW1w:lRfjvz-zIM-ZtcrpdzQP290Mt4gZHjJeIFDJhh9TB58",
+    "expire_date": "2026-07-31T03:02:56.147Z"
+  }
+},
+{
+  "model": "stock.boutique",
+  "pk": 1,
+  "fields": {
+    "nom": "Cocotomey Shop",
+    "adresse": "Cocotomey",
+    "telephone": "+229 01 97 38 38 60",
+    "proprietaire": [
+      "Marius"
+    ],
+    "date_creation": "2026-04-30T14:12:43.838Z",
+    "est_active": true
+  }
+},
+{
+  "model": "stock.boutique",
+  "pk": 2,
+  "fields": {
+    "nom": "Godomey Shop",
+    "adresse": "Godomey",
+    "telephone": "+229 01 66 42 91 90",
+    "proprietaire": [
+      "Admin"
+    ],
+    "date_creation": "2026-04-30T14:14:15.629Z",
+    "est_active": true
+  }
+},
+{
+  "model": "stock.marque",
+  "pk": 1,
+  "fields": {
+    "nom": "Infinix",
+    "logo": ""
+  }
+},
+{
+  "model": "stock.marque",
+  "pk": 2,
+  "fields": {
+    "nom": "Tecno",
+    "logo": ""
+  }
+},
+{
+  "model": "stock.marque",
+  "pk": 3,
+  "fields": {
+    "nom": "Samsung",
+    "logo": ""
+  }
+},
+{
+  "model": "stock.marque",
+  "pk": 4,
+  "fields": {
+    "nom": "Xiaomi",
+    "logo": ""
+  }
+},
+{
+  "model": "stock.marque",
+  "pk": 5,
+  "fields": {
+    "nom": "iPhone",
+    "logo": ""
+  }
+},
+{
+  "model": "stock.marque",
+  "pk": 6,
+  "fields": {
+    "nom": "Itel",
+    "logo": ""
+  }
+},
+{
+  "model": "stock.marque",
+  "pk": 7,
+  "fields": {
+    "nom": "Phillips",
+    "logo": ""
+  }
+},
+{
+  "model": "stock.marque",
+  "pk": 8,
+  "fields": {
+    "nom": "Nokia",
+    "logo": ""
+  }
+},
+{
+  "model": "stock.marque",
+  "pk": 9,
+  "fields": {
+    "nom": "B77's max",
+    "logo": ""
+  }
+},
+{
+  "model": "stock.marque",
+  "pk": 10,
+  "fields": {
+    "nom": "knk",
+    "logo": ""
+  }
+},
+{
+  "model": "stock.marque",
+  "pk": 11,
+  "fields": {
+    "nom": "Villaon",
+    "logo": ""
+  }
+},
+{
+  "model": "stock.marque",
+  "pk": 12,
+  "fields": {
+    "nom": "Macpad Air",
+    "logo": ""
+  }
+},
+{
+  "model": "stock.marque",
+  "pk": 13,
+  "fields": {
+    "nom": "Accessoire",
+    "logo": ""
+  }
+},
+{
+  "model": "stock.categorie",
+  "pk": 1,
+  "fields": {
+    "nom": "Smartphone"
+  }
+},
+{
+  "model": "stock.categorie",
+  "pk": 2,
+  "fields": {
+    "nom": "Accessoire"
+  }
+},
+{
+  "model": "stock.categorie",
+  "pk": 3,
+  "fields": {
+    "nom": "Tablette enfants"
+  }
+},
+{
+  "model": "stock.categorie",
+  "pk": 4,
+  "fields": {
+    "nom": "Autre"
+  }
+},
+{
+  "model": "stock.categorie",
+  "pk": 5,
+  "fields": {
+    "nom": "A touche"
+  }
+},
+{
+  "model": "stock.categorie",
+  "pk": 6,
+  "fields": {
+    "nom": "Tablette adulte"
+  }
+},
+{
+  "model": "stock.categorie",
+  "pk": 7,
+  "fields": {
+    "nom": "Clé USB"
+  }
+},
+{
+  "model": "stock.categorie",
+  "pk": 8,
+  "fields": {
+    "nom": "Casque"
+  }
+},
+{
+  "model": "stock.categorie",
+  "pk": 9,
+  "fields": {
+    "nom": "Airpods"
+  }
+},
+{
+  "model": "stock.categorie",
+  "pk": 10,
+  "fields": {
+    "nom": "Ecouteur"
+  }
+},
+{
+  "model": "stock.categorie",
+  "pk": 11,
+  "fields": {
+    "nom": "Chargeur"
+  }
+},
+{
+  "model": "stock.categorie",
+  "pk": 12,
+  "fields": {
+    "nom": "Power Bank"
+  }
+},
+{
+  "model": "stock.categorie",
+  "pk": 13,
+  "fields": {
+    "nom": "battérie"
+  }
+},
+{
+  "model": "stock.categorie",
+  "pk": 14,
+  "fields": {
+    "nom": "incassable"
+  }
+},
+{
+  "model": "stock.categorie",
+  "pk": 15,
+  "fields": {
+    "nom": "Tablette"
+  }
+},
+{
+  "model": "stock.demandearrivage",
+  "pk": 1,
+  "fields": {
+    "boutique": 1,
+    "employe": [
+      "Rebecca"
+    ],
+    "type_demande": "nouveau_produit",
+    "statut": "confirme",
+    "date_creation": "2026-05-01T20:55:45.647Z",
+    "date_traitement": "2026-05-01T20:59:32.922Z",
+    "stock": null,
+    "nom_produit": "Hot 40",
+    "marque": 1,
+    "categorie": 1,
+    "type_produit": "smartphone",
+    "quantite": 6,
+    "date_arrivage": "2026-04-30",
+    "notes": "",
+    "imeis_json": "[]",
+    "prix_achat": "80000",
+    "prix_vente_suggere": "100000",
+    "notes_patron": ""
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 1,
+  "fields": {
+    "action_time": "2026-04-30T22:13:47.150Z",
+    "user": [
+      "Admin"
+    ],
+    "content_type": [
+      "auth",
+      "user"
+    ],
+    "object_id": "2",
+    "object_repr": "boutique_cocotomey",
+    "action_flag": 1,
+    "change_message": "[{\"added\": {}}]"
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 2,
+  "fields": {
+    "action_time": "2026-05-02T15:47:14.867Z",
+    "user": [
+      "Admin"
+    ],
+    "content_type": [
+      "stock",
+      "marque"
+    ],
+    "object_id": "7",
+    "object_repr": "Phillips",
+    "action_flag": 1,
+    "change_message": "[{\"added\": {}}]"
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 3,
+  "fields": {
+    "action_time": "2026-05-02T15:49:06.122Z",
+    "user": [
+      "Admin"
+    ],
+    "content_type": [
+      "stock",
+      "categorie"
+    ],
+    "object_id": "5",
+    "object_repr": "A touche",
+    "action_flag": 1,
+    "change_message": "[{\"added\": {}}]"
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 4,
+  "fields": {
+    "action_time": "2026-05-02T15:59:21.269Z",
+    "user": [
+      "Admin"
+    ],
+    "content_type": [
+      "stock",
+      "marque"
+    ],
+    "object_id": "8",
+    "object_repr": "Nokia",
+    "action_flag": 1,
+    "change_message": "[{\"added\": {}}]"
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 5,
+  "fields": {
+    "action_time": "2026-05-02T16:00:25.946Z",
+    "user": [
+      "Admin"
+    ],
+    "content_type": [
+      "stock",
+      "marque"
+    ],
+    "object_id": "9",
+    "object_repr": "B77's max",
+    "action_flag": 1,
+    "change_message": "[{\"added\": {}}]"
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 6,
+  "fields": {
+    "action_time": "2026-05-02T16:00:34.648Z",
+    "user": [
+      "Admin"
+    ],
+    "content_type": [
+      "stock",
+      "marque"
+    ],
+    "object_id": "10",
+    "object_repr": "knk",
+    "action_flag": 1,
+    "change_message": "[{\"added\": {}}]"
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 7,
+  "fields": {
+    "action_time": "2026-05-02T16:00:44.091Z",
+    "user": [
+      "Admin"
+    ],
+    "content_type": [
+      "stock",
+      "marque"
+    ],
+    "object_id": "11",
+    "object_repr": "Villaon",
+    "action_flag": 1,
+    "change_message": "[{\"added\": {}}]"
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 8,
+  "fields": {
+    "action_time": "2026-05-02T16:00:58.749Z",
+    "user": [
+      "Admin"
+    ],
+    "content_type": [
+      "stock",
+      "marque"
+    ],
+    "object_id": "12",
+    "object_repr": "Macpad Air",
+    "action_flag": 1,
+    "change_message": "[{\"added\": {}}]"
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 9,
+  "fields": {
+    "action_time": "2026-05-02T16:01:17.793Z",
+    "user": [
+      "Admin"
+    ],
+    "content_type": [
+      "stock",
+      "categorie"
+    ],
+    "object_id": "3",
+    "object_repr": "Tablette enfants",
+    "action_flag": 2,
+    "change_message": "[{\"changed\": {\"fields\": [\"Nom\"]}}]"
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 10,
+  "fields": {
+    "action_time": "2026-05-02T16:01:26.321Z",
+    "user": [
+      "Admin"
+    ],
+    "content_type": [
+      "stock",
+      "categorie"
+    ],
+    "object_id": "6",
+    "object_repr": "Tablette adulte",
+    "action_flag": 1,
+    "change_message": "[{\"added\": {}}]"
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 11,
+  "fields": {
+    "action_time": "2026-05-02T16:15:36.383Z",
+    "user": [
+      "Admin"
+    ],
+    "content_type": [
+      "stock",
+      "vente"
+    ],
+    "object_id": "2",
+    "object_repr": "Vente #ffe818af | Cocotomey Shop | 01/05/2026",
+    "action_flag": 3,
+    "change_message": ""
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 12,
+  "fields": {
+    "action_time": "2026-05-02T16:15:40.971Z",
+    "user": [
+      "Admin"
+    ],
+    "content_type": [
+      "stock",
+      "vente"
+    ],
+    "object_id": "1",
+    "object_repr": "Vente #7269685d | Cocotomey Shop | 30/04/2026",
+    "action_flag": 3,
+    "change_message": ""
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 13,
+  "fields": {
+    "action_time": "2026-05-02T16:15:58.281Z",
+    "user": [
+      "Admin"
+    ],
+    "content_type": [
+      "stock",
+      "produit"
+    ],
+    "object_id": "1",
+    "object_repr": "Infinix Hot 40 pro",
+    "action_flag": 3,
+    "change_message": ""
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 14,
+  "fields": {
+    "action_time": "2026-05-02T16:16:05.741Z",
+    "user": [
+      "Admin"
+    ],
+    "content_type": [
+      "stock",
+      "produit"
+    ],
+    "object_id": "2",
+    "object_repr": "Infinix Hot 40 pro",
+    "action_flag": 3,
+    "change_message": ""
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 15,
+  "fields": {
+    "action_time": "2026-05-02T16:16:09.532Z",
+    "user": [
+      "Admin"
+    ],
+    "content_type": [
+      "stock",
+      "produit"
+    ],
+    "object_id": "3",
+    "object_repr": "Infinix Hot 40",
+    "action_flag": 3,
+    "change_message": ""
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 16,
+  "fields": {
+    "action_time": "2026-05-04T22:32:30.568Z",
+    "user": [
+      "Admin"
+    ],
+    "content_type": [
+      "stock",
+      "categorie"
+    ],
+    "object_id": "7",
+    "object_repr": "Clé USB",
+    "action_flag": 1,
+    "change_message": "[{\"added\": {}}]"
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 17,
+  "fields": {
+    "action_time": "2026-05-04T22:32:41.074Z",
+    "user": [
+      "Admin"
+    ],
+    "content_type": [
+      "stock",
+      "categorie"
+    ],
+    "object_id": "8",
+    "object_repr": "Casque",
+    "action_flag": 1,
+    "change_message": "[{\"added\": {}}]"
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 18,
+  "fields": {
+    "action_time": "2026-05-04T22:32:58.167Z",
+    "user": [
+      "Admin"
+    ],
+    "content_type": [
+      "stock",
+      "categorie"
+    ],
+    "object_id": "9",
+    "object_repr": "Airpods",
+    "action_flag": 1,
+    "change_message": "[{\"added\": {}}]"
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 19,
+  "fields": {
+    "action_time": "2026-05-04T22:33:07.348Z",
+    "user": [
+      "Admin"
+    ],
+    "content_type": [
+      "stock",
+      "categorie"
+    ],
+    "object_id": "10",
+    "object_repr": "Ecouteur",
+    "action_flag": 1,
+    "change_message": "[{\"added\": {}}]"
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 20,
+  "fields": {
+    "action_time": "2026-05-04T22:33:27.108Z",
+    "user": [
+      "Admin"
+    ],
+    "content_type": [
+      "stock",
+      "categorie"
+    ],
+    "object_id": "11",
+    "object_repr": "Chargeur",
+    "action_flag": 1,
+    "change_message": "[{\"added\": {}}]"
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 21,
+  "fields": {
+    "action_time": "2026-05-04T22:33:36.797Z",
+    "user": [
+      "Admin"
+    ],
+    "content_type": [
+      "stock",
+      "categorie"
+    ],
+    "object_id": "12",
+    "object_repr": "Power Bank",
+    "action_flag": 1,
+    "change_message": "[{\"added\": {}}]"
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 22,
+  "fields": {
+    "action_time": "2026-05-04T22:34:40.622Z",
+    "user": [
+      "Admin"
+    ],
+    "content_type": [
+      "stock",
+      "categorie"
+    ],
+    "object_id": "13",
+    "object_repr": "battérie",
+    "action_flag": 1,
+    "change_message": "[{\"added\": {}}]"
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 23,
+  "fields": {
+    "action_time": "2026-05-04T22:35:41.240Z",
+    "user": [
+      "Admin"
+    ],
+    "content_type": [
+      "stock",
+      "categorie"
+    ],
+    "object_id": "14",
+    "object_repr": "incassable",
+    "action_flag": 1,
+    "change_message": "[{\"added\": {}}]"
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 24,
+  "fields": {
+    "action_time": "2026-05-04T22:36:04.006Z",
+    "user": [
+      "Admin"
+    ],
+    "content_type": [
+      "stock",
+      "marque"
+    ],
+    "object_id": "13",
+    "object_repr": "Acessoire",
+    "action_flag": 1,
+    "change_message": "[{\"added\": {}}]"
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 25,
+  "fields": {
+    "action_time": "2026-05-04T22:36:27.423Z",
+    "user": [
+      "Admin"
+    ],
+    "content_type": [
+      "stock",
+      "marque"
+    ],
+    "object_id": "13",
+    "object_repr": "Accessoire",
+    "action_flag": 2,
+    "change_message": "[{\"changed\": {\"fields\": [\"Nom\"]}}]"
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 26,
+  "fields": {
+    "action_time": "2026-06-18T16:38:39.889Z",
+    "user": [
+      "Admin"
+    ],
+    "content_type": [
+      "auth",
+      "user"
+    ],
+    "object_id": "6",
+    "object_repr": "Mondestinfirst",
+    "action_flag": 2,
+    "change_message": "[{\"changed\": {\"fields\": [\"password\"]}}]"
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 27,
+  "fields": {
+    "action_time": "2026-06-18T16:39:49.054Z",
+    "user": [
+      "Admin"
+    ],
+    "content_type": [
+      "auth",
+      "user"
+    ],
+    "object_id": "6",
+    "object_repr": "Marius",
+    "action_flag": 2,
+    "change_message": "[{\"changed\": {\"fields\": [\"Username\", \"First name\", \"Last name\"]}}]"
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 28,
+  "fields": {
+    "action_time": "2026-06-18T16:42:09.934Z",
+    "user": [
+      "Admin"
+    ],
+    "content_type": [
+      "stock",
+      "boutique"
+    ],
+    "object_id": "1",
+    "object_repr": "Cocotomey Shop",
+    "action_flag": 2,
+    "change_message": "[{\"changed\": {\"fields\": [\"Proprietaire\"]}}]"
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 29,
+  "fields": {
+    "action_time": "2026-06-18T16:43:26.345Z",
+    "user": [
+      "Admin"
+    ],
+    "content_type": [
+      "stock",
+      "boutique"
+    ],
+    "object_id": "1",
+    "object_repr": "Cocotomey Shop",
+    "action_flag": 2,
+    "change_message": "[{\"changed\": {\"fields\": [\"Proprietaire\"]}}]"
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 30,
+  "fields": {
+    "action_time": "2026-06-18T16:43:42.683Z",
+    "user": [
+      "Admin"
+    ],
+    "content_type": [
+      "stock",
+      "profilemploye"
+    ],
+    "object_id": "6",
+    "object_repr": "Marius (Propriétaire)",
+    "action_flag": 2,
+    "change_message": "[{\"changed\": {\"fields\": [\"Role\"]}}]"
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 31,
+  "fields": {
+    "action_time": "2026-06-18T16:46:58.828Z",
+    "user": [
+      "Admin"
+    ],
+    "content_type": [
+      "stock",
+      "boutique"
+    ],
+    "object_id": "1",
+    "object_repr": "Cocotomey Shop",
+    "action_flag": 2,
+    "change_message": "[{\"changed\": {\"fields\": [\"Proprietaire\"]}}]"
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 32,
+  "fields": {
+    "action_time": "2026-07-30T17:56:59.466Z",
+    "user": [
+      "Admin"
+    ],
+    "content_type": [
+      "auth",
+      "user"
+    ],
+    "object_id": "6",
+    "object_repr": "Marius",
+    "action_flag": 2,
+    "change_message": "[{\"changed\": {\"fields\": [\"password\"]}}]"
+  }
+},
+{
+  "model": "admin.logentry",
+  "pk": 33,
+  "fields": {
+    "action_time": "2026-07-30T17:57:09.075Z",
+    "user": [
+      "Admin"
+    ],
+    "content_type": [
+      "auth",
+      "user"
+    ],
+    "object_id": "6",
+    "object_repr": "Marius",
+    "action_flag": 2,
+    "change_message": "[]"
+  }
+}
+]
