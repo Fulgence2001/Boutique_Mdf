@@ -5,4 +5,4 @@ class StockConfig(AppConfig):
     name = 'stock'
 
     def ready(self):
-        pass  # ← Signals désactivés temporairement
+        import stock.signals
