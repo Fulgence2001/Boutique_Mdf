@@ -37,6 +37,31 @@ def employe_sa_boutique(view_func):
         return view_func(request, *args, **kwargs)
     return wrapper
 
+from datetime import datetime, timezone, timedelta
+
+def horaire_requis(view_func):
+    @wraps(view_func)
+    def wrapper(request, *args, **kwargs):
+        try:
+            if request.user.profil.est_proprietaire:
+                return view_func(request, *args, **kwargs)
+        except Exception:
+            pass
+
+        # Heure au Bénin (UTC+1)
+        benin_tz = timezone(timedelta(hours=1))
+        heure_benin = datetime.now(benin_tz)
+        heure = heure_benin.hour
+
+        if not (8 <= heure < 22):
+            return render(request, 'stock/acces_horaire_refuse.html', {
+                'heure_ouverture': '08:00',
+                'heure_fermeture': '22:00',
+                'heure_actuelle': heure_benin.strftime('%H:%M'),
+            })
+
+        return view_func(request, *args, **kwargs)
+    return wrapper
 
 # ── Connexion ──────────────────────────────────────────
 def vue_connexion(request):
@@ -449,6 +474,7 @@ def get_boutique_active(request):
 # ── Liste du Stock ─────────────────────────────────────
 @login_required
 @employe_sa_boutique
+@horaire_requis
 def stock_liste(request):
     boutique = get_boutique_active(request)
     if not boutique:
@@ -501,6 +527,7 @@ def stock_liste(request):
 # ── Ajouter Produit + Stock ────────────────────────────
 @login_required
 @employe_sa_boutique
+@horaire_requis
 def stock_ajouter(request):
     boutique = get_boutique_active(request)
     if not boutique:
@@ -703,6 +730,7 @@ from decimal import Decimal
 # ── POS : Interface de vente ───────────────────────────
 @login_required
 @employe_sa_boutique
+@horaire_requis
 def pos(request):
     boutique = get_boutique_active(request)
     if not boutique:
@@ -1591,3 +1619,4 @@ def export_ventes_pdf(request):
 
     response = HttpResponse(html, content_type='text/html')
     return response
+

@@ -1,0 +1,23 @@
+{% extends 'stock/base.html' %}
+{% block title %}Accès refusé{% endblock %}
+
+{% block content %}
+<div style="background:white; border-radius:16px; padding:40px; max-width:480px; margin:60px auto; text-align:center; box-shadow:0 4px 20px rgba(0,0,0,.1);">
+    <p style="font-size:64px;">🔒</p>
+    <h1 style="font-size:24px; margin-bottom:12px; color:#1a1a2e;">Boutique fermée</h1>
+    <p style="color:#666; font-size:15px; margin-bottom:24px;">
+        L'application est accessible uniquement de
+        <strong>{{ heure_ouverture }}</strong> à <strong>{{ heure_fermeture }}</strong>.
+    </p>
+    <div style="background:#f0f4ff; border-radius:12px; padding:16px; margin-bottom:24px;">
+        <p style="font-size:13px; color:#666; margin-bottom:4px;">Heure actuelle</p>
+        <p style="font-size:32px; font-weight:800; color:#4361ee;">{{ heure_actuelle }}</p>
+    </div>
+    <p style="font-size:13px; color:#aaa;">
+        Contactez votre responsable si vous avez besoin d'un accès exceptionnel.
+    </p>
+    <a href="{% url 'deconnexion' %}" style="display:inline-block; margin-top:20px; padding:12px 28px; background:#4361ee; color:white; border-radius:10px; text-decoration:none; font-weight:600;">
+        Se déconnecter
+    </a>
+</div>
+{% endblock %}
