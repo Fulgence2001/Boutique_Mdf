@@ -48,7 +48,8 @@
     </div>
     <div style="display:flex; gap:10px; flex-wrap:wrap;">
         {% if request.user|est_proprietaire %}
-            <a href="{% url 'imei_ajouter' stock.pk %}" class="btn btn-success">+ Ajouter IMEI</a>
+            <a href="{% url 'demande_arrivage' stock.pk %}" class="btn btn-success">📥 Signaler arrivage</a>
+            <a href="{% url 'imei_ajouter' stock.pk %}" class="btn" style="background:#e0e7ff;color:#4361ee">+ IMEI</a>
             <a href="{% url 'stock_supprimer' stock.pk %}" class="btn btn-danger">🗑 Supprimer</a>
         {% else %}
             <a href="{% url 'demande_arrivage' stock.pk %}" class="btn btn-success">📥 Signaler arrivage</a>
@@ -87,39 +88,6 @@
         <div class="lbl">Valeur totale stock (F)</div>
     </div>
     {% endif %}
-</div>
-
-<!-- Arrivage rapide -->
-{% load stock_tags %}
-
-<div class="card">
-    <h2>📥 Enregistrer un arrivage</h2>
-    <form method="post">
-        {% csrf_token %}
-        <div class="form-row">
-            <div class="form-group">
-                <label>Quantité reçue *</label>
-                {{ arrivage_form.quantite_ajoutee }}
-            </div>
-            <div class="form-group">
-                <label>Date d'arrivage *</label>
-                {{ arrivage_form.date_arrivage }}
-            </div>
-        </div>
-        {% if request.user|est_proprietaire %}
-        <div class="form-row">
-            <div class="form-group">
-                <label>Nouveau prix d'achat (FCFA) *</label>
-                {{ arrivage_form.nouveau_prix_achat }}
-            </div>
-            <div class="form-group">
-                <label>Nouveau prix vente conseillé (FCFA) *</label>
-                {{ arrivage_form.nouveau_prix_vente }}
-            </div>
-        </div>
-        {% endif %}
-        <button type="submit" class="btn btn-primary">✅ Enregistrer l'arrivage</button>
-    </form>
 </div>
 
 <!-- Seuil d'alerte -->

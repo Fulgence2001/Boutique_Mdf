@@ -1,4 +1,5 @@
 {% extends 'stock/base.html' %}
+{% load stock_tags %}
 {% block title %}Signaler un arrivage{% endblock %}
 
 {% block extra_css %}
@@ -15,6 +16,7 @@
     .form-group input:focus, .form-group textarea:focus { outline:none; border-color:#4361ee; }
     .form-row { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
     .info-box { background:#fef3c7; border-radius:10px; padding:12px 16px; font-size:13px; color:#92400e; margin-bottom:20px; }
+    .info-box.vert { background:#d1fae5; color:#065f46; }
     .btn { padding:12px 28px; border:none; border-radius:10px; font-size:14px; font-weight:600; cursor:pointer; text-decoration:none; display:inline-block; }
     .btn-primary { background:#4361ee; color:white; }
     @media(max-width:560px){ .form-row { grid-template-columns:1fr; } }
@@ -32,9 +34,15 @@
         Stock actuel : <strong>{{ stock.quantite }} unité(s)</strong>
     </div>
 
+    {% if request.user|est_proprietaire %}
+    <div class="info-box vert">
+        ✅ En tant que responsable, cet arrivage sera ajouté <strong>immédiatement</strong> au stock.
+    </div>
+    {% else %}
     <div class="info-box">
         ℹ️ Le responsable recevra cette demande et y ajoutera le <strong>prix d'achat</strong> avant validation.
     </div>
+    {% endif %}
 
     <form method="post">
         {% csrf_token %}
@@ -48,6 +56,19 @@
                 <input type="date" name="date_arrivage" required>
             </div>
         </div>
+
+        {% if request.user|est_proprietaire %}
+        <div class="form-row">
+            <div class="form-group">
+                <label>Prix d'achat (FCFA) *</label>
+                <input type="number" name="prix_achat" min="0" placeholder="Ex: 45000" required>
+            </div>
+            <div class="form-group">
+                <label>Prix de vente conseillé (FCFA) *</label>
+                <input type="number" name="prix_vente_suggere" min="0" placeholder="Ex: 55000" required>
+            </div>
+        </div>
+        {% endif %}
 
         {% if stock.produit.type_produit == 'smartphone' %}
         <div class="form-group">
@@ -67,11 +88,13 @@
         {% endif %}
 
         <div class="form-group">
-            <label>Notes pour le responsable</label>
+            <label>Notes {% if not request.user|est_proprietaire %}pour le responsable{% endif %}</label>
             <textarea name="notes" rows="3" placeholder="Ex: Reçu du fournisseur Ets. Koffi, facture n°123..."></textarea>
         </div>
 
-        <button type="submit" class="btn btn-primary">📤 Soumettre au responsable</button>
+        <button type="submit" class="btn btn-primary">
+            {% if request.user|est_proprietaire %}✅ Enregistrer l'arrivage{% else %}📤 Soumettre au responsable{% endif %}
+        </button>
     </form>
 </div>
 {% endblock %}

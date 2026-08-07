@@ -563,6 +563,18 @@ def stock_ajouter(request):
                 stock.prix_vente_suggere = prix_vente
                 stock.save()
 
+            # ── Enregistrement mouvement entrée ───────
+            from .models import MouvementStock
+            MouvementStock.objects.create(
+                stock=stock,
+                type_mouvement='entree',
+                motif='arrivage',
+                quantite=quantite,
+                effectue_par=request.user,
+                prix_unitaire=prix_achat,
+                notes="Ajout direct de stock"
+            )
+
             messages.success(request, f"Stock mis à jour pour {produit} !")
             return redirect('stock_detail', pk=stock.pk)
 
@@ -577,6 +589,20 @@ def stock_ajouter(request):
                 stock.produit = produit
                 stock.boutique = boutique
                 stock.save()
+
+                # ── Enregistrement mouvement entrée ───
+                if stock.quantite > 0:
+                    from .models import MouvementStock
+                    MouvementStock.objects.create(
+                        stock=stock,
+                        type_mouvement='entree',
+                        motif='arrivage',
+                        quantite=stock.quantite,
+                        effectue_par=request.user,
+                        prix_unitaire=stock.prix_achat,
+                        notes="Création produit + stock initial"
+                    )
+
                 messages.success(request, f"Produit « {produit} » ajouté au stock !")
 
                 if produit.type_produit == 'smartphone':
@@ -593,36 +619,20 @@ def stock_ajouter(request):
         'produits_existants': produits_existants,
     })
 
+
+# ── Détail d'un stock ──────────────────────────────────
 # ── Détail d'un stock ──────────────────────────────────
 @login_required
 def stock_detail(request, pk):
     boutique = get_boutique_active(request)
     stock = get_object_or_404(StockBoutique, pk=pk, boutique=boutique)
     imeis = stock.imeis.all().order_by('statut', '-date_entree')
-    arrivage_form = ArrivageForm(request.POST or None)
-
-    if request.method == 'POST' and arrivage_form.is_valid():
-        data = arrivage_form.cleaned_data
-        stock.quantite += data['quantite_ajoutee']
-        stock.date_dernier_arrivage = data['date_arrivage']
-
-        # Seul le propriétaire peut changer les prix
-        est_proprio = request.user.profil.est_proprietaire
-        if est_proprio:
-            stock.prix_achat = data['nouveau_prix_achat']
-            stock.prix_vente_suggere = data['nouveau_prix_vente']
-
-        stock.save()
-        messages.success(request, f"{data['quantite_ajoutee']} unité(s) ajoutée(s) au stock !")
-        return redirect('stock_detail', pk=pk)
 
     return render(request, 'stock/stock_detail.html', {
         'stock': stock,
         'imeis': imeis,
-        'arrivage_form': arrivage_form,
         'boutique': boutique,
     })
-
 
 # ── Ajouter des IMEI ──────────────────────────────────
 @login_required
@@ -1078,12 +1088,13 @@ import json as json_module
 from .models import DemandeArrivage
 
 
-# ── EMPLOYÉ : Soumettre un arrivage (sans prix) ────────
+# ── EMPLOYÉ / PATRON : Soumettre un arrivage ───────────
 @login_required
 @employe_sa_boutique
 def demande_arrivage(request, stock_pk):
     boutique = get_boutique_active(request)
     stock = get_object_or_404(StockBoutique, pk=stock_pk, boutique=boutique)
+    est_proprio = request.user.profil.est_proprietaire
 
     if request.method == 'POST':
         quantite = int(request.POST.get('quantite', 0))
@@ -1103,6 +1114,50 @@ def demande_arrivage(request, stock_pk):
             if imei:
                 imeis.append({'imei': imei, 'couleur': couleur, 'stockage': stockage})
 
+        # ── PATRON : arrivage direct, sans validation ─────
+        if est_proprio:
+            prix_achat = request.POST.get('prix_achat', '').strip()
+            prix_vente = request.POST.get('prix_vente_suggere', '').strip()
+
+            if not prix_achat or not prix_vente:
+                messages.error(request, "Prix d'achat et prix de vente sont obligatoires.")
+                return redirect('demande_arrivage', stock_pk=stock_pk)
+
+            prix_achat = float(prix_achat)
+            prix_vente = float(prix_vente)
+
+            stock.quantite += quantite
+            stock.prix_achat = prix_achat
+            stock.prix_vente_suggere = prix_vente
+            if date_arrivage:
+                stock.date_dernier_arrivage = date_arrivage
+            stock.save()
+
+            from .models import MouvementStock
+            MouvementStock.objects.create(
+                stock=stock,
+                type_mouvement='entree',
+                motif='arrivage',
+                quantite=quantite,
+                effectue_par=request.user,
+                prix_unitaire=prix_achat,
+                notes=notes or "Arrivage direct (patron)"
+            )
+
+            for item in imeis:
+                imei_code = item.get('imei', '').strip()
+                if imei_code and not SmartphoneIMEI.objects.filter(imei=imei_code).exists():
+                    SmartphoneIMEI.objects.create(
+                        stock=stock,
+                        imei=imei_code,
+                        couleur=item.get('couleur', ''),
+                        stockage=item.get('stockage', ''),
+                    )
+
+            messages.success(request, f"{quantite} unité(s) ajoutée(s) au stock !")
+            return redirect('stock_detail', pk=stock_pk)
+
+        # ── EMPLOYÉ : soumission pour validation ──────────
         DemandeArrivage.objects.create(
             boutique=boutique,
             employe=request.user,
@@ -1293,6 +1348,18 @@ def demande_traiter(request, demande_id):
                 if demande.date_arrivage:
                     stock.date_dernier_arrivage = demande.date_arrivage
                 stock.save()
+
+                # ── Enregistrement mouvement entrée ──
+                from .models import MouvementStock
+                MouvementStock.objects.create(
+                    stock=stock,
+                    type_mouvement='entree',
+                    motif='arrivage',
+                    quantite=demande.quantite,
+                    effectue_par=request.user,
+                    prix_unitaire=prix_achat,
+                    notes=f"Nouveau produit confirmé — {demande.employe.username}"
+                )
 
                 for item in demande.imeis_list:
                     imei_code = item.get('imei', '').strip()
