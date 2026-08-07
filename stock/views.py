@@ -6,6 +6,10 @@ from .forms import ConnexionForm, InscriptionForm
 from .models import Boutique, ProfilEmploye
 from functools import wraps
 from django.core.exceptions import PermissionDenied
+from datetime import datetime, timedelta,date   
+from datetime import timezone as py_timezone
+from django.db.models import Sum, Count, F, ExpressionWrapper, DecimalField
+from django.db.models.functions import TruncDay, TruncWeek, TruncMonth
 
 def proprietaire_requis(view_func):
     """Bloque l'accès aux employés — réservé aux propriétaires."""
@@ -49,7 +53,7 @@ def horaire_requis(view_func):
             pass
 
         # Heure au Bénin (UTC+1)
-        benin_tz = timezone(timedelta(hours=1))
+        benin_tz = py_timezone(timedelta(hours=1))
         heure_benin = datetime.now(benin_tz)
         heure = heure_benin.hour
 
@@ -174,10 +178,7 @@ def creer_boutique(request):
     return render(request, 'stock/creer_boutique.html')
 
 
-from django.utils import timezone
-from datetime import timedelta, date
-from django.db.models import Sum, Count, F, ExpressionWrapper, DecimalField
-from django.db.models.functions import TruncDay, TruncWeek, TruncMonth
+
 
 
 # ── Dashboard principal ────────────────────────────────
