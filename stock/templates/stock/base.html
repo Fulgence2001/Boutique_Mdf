@@ -10,6 +10,7 @@
         .navbar {
             background: #1a1a2e; color: white; padding: 12px 24px;
             display: flex; justify-content: space-between; align-items: center;
+            flex-wrap: wrap; gap: 8px;
         }
         .navbar a { color: #4cc9f0; text-decoration: none; margin-left: 16px; font-size: 14px; }
         .navbar .boutique-badge {
@@ -27,27 +28,26 @@
 
 {% if user.is_authenticated %}
 <nav class="navbar">
-    <strong>📦 MON DESTIN FIRST </strong>
+    <strong>📦 MON DESTIN FIRST</strong>
     <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
         {% if request.session.boutique_active_nom %}
             <span class="boutique-badge">🏪 {{ request.session.boutique_active_nom }}</span>
 
             {% if user.profil.est_proprietaire %}
-                {# Propriétaire : accès complet #}
                 <a href="{% url 'dashboard' %}">Dashboard</a>
                 <a href="{% url 'stock_liste' %}">Stock</a>
                 <a href="{% url 'pos' %}">🛒 Caisse</a>
                 <a href="{% url 'depenses_liste' %}">📒 Dépenses</a>
                 <a href="{% url 'vente_historique' %}">Ventes</a>
-                {% if user.profil.est_proprietaire %}
                 <a href="{% url 'entrees_stock_liste' %}">📥 Entrées</a>
                 <a href="{% url 'rapport_benefices' %}">Rapports</a>
                 <a href="{% url 'employes_liste' %}">👥 Employés</a>
-                <a href="{% url 'demandes_liste' %}" style="position:relative; padding:6px 12px; background:{% if nb_demandes_attente %}#ef4444{% else %}transparent{% endif %}; border-radius:8px; color:{% if nb_demandes_attente %}white{% else %}#4cc9f0{% endif %}">
-    📬 Demandes{% if nb_demandes_attente %} ({{ nb_demandes_attente }}){% endif %}
-</a>
+                <a href="{% url 'gerer_marques_categories' %}">🏷️ Catalogue</a>
+                <a href="{% url 'historique_mouvements' %}">📊 Mouvements</a>
+                <a href="{% url 'demandes_liste' %}" style="padding:6px 12px; border-radius:8px; background:{% if nb_demandes_attente %}#ef4444{% else %}transparent{% endif %}; color:{% if nb_demandes_attente %}white{% else %}#4cc9f0{% endif %};">
+                    📬 Demandes{% if nb_demandes_attente %} ({{ nb_demandes_attente }}){% endif %}
+                </a>
             {% else %}
-                {# Employé : caisse + stock uniquement #}
                 <a href="{% url 'stock_liste' %}">Stock</a>
                 <a href="{% url 'pos' %}">🛒 Caisse</a>
                 <a href="{% url 'depenses_liste' %}">📒 Dépenses</a>
@@ -55,12 +55,9 @@
             {% endif %}
         {% endif %}
 
-        <a href="{% url 'choisir_boutique' %}">
-            {% if user.profil.est_proprietaire %}Boutiques{% endif %}
-        </a>
-        <a href="{% url 'historique_mouvements' %}">📊 Mouvements</a>
-
-        <a href="{% url 'gerer_marques_categories' %}">🏷️ Catalogue</a>
+        {% if user.profil.est_proprietaire %}
+            <a href="{% url 'choisir_boutique' %}">Boutiques</a>
+        {% endif %}
         <a href="{% url 'deconnexion' %}">Déconnexion</a>
     </div>
 </nav>
