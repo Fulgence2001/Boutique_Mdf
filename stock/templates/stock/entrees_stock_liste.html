@@ -1,0 +1,93 @@
+{% extends 'stock/base.html' %}
+{% load stock_tags %}
+{% block title %}Historique des entrées{% endblock %}
+
+{% block extra_css %}
+<style>
+    .page-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:24px; flex-wrap:wrap; gap:12px; }
+    .filtres { background:white; border-radius:12px; padding:16px; margin-bottom:20px; display:flex; gap:10px; flex-wrap:wrap; box-shadow:0 2px 10px rgba(0,0,0,.06); }
+    .filtres input, .filtres select { padding:9px 14px; border:2px solid #e5e7eb; border-radius:8px; font-size:14px; }
+    .filtres input:focus, .filtres select:focus { outline:none; border-color:#4361ee; }
+    .btn { padding:9px 18px; border:none; border-radius:8px; font-size:13px; font-weight:600; cursor:pointer; text-decoration:none; display:inline-block; }
+    .btn-primary { background:#4361ee; color:white; }
+    .btn-warning { background:#f59e0b; color:white; }
+    .btn-danger { background:#fee2e2; color:#dc2626; }
+    .btn-sm { padding:5px 12px; font-size:12px; }
+    .card { background:white; border-radius:14px; padding:20px; box-shadow:0 2px 14px rgba(0,0,0,.07); }
+    .entree-item { display:flex; justify-content:space-between; align-items:center; padding:14px 0; border-bottom:1px solid #f5f5f5; gap:12px; flex-wrap:wrap; }
+    .entree-item:last-child { border-bottom:none; }
+    .entree-info { flex:1; }
+    .entree-produit { font-size:14px; font-weight:700; margin-bottom:4px; }
+    .entree-meta { font-size:12px; color:#888; }
+    .entree-prix { font-size:13px; color:#4361ee; font-weight:600; margin-top:4px; }
+    .entree-qte { font-size:20px; font-weight:800; color:#10b981; white-space:nowrap; }
+    .actions { display:flex; gap:6px; }
+    .empty { text-align:center; padding:50px; color:#aaa; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1>📥 Historique des Entrées</h1>
+        <p style="color:#666; font-size:13px;">{{ boutique.nom }}</p>
+    </div>
+    <a href="{% url 'stock_liste' %}" class="btn" style="background:#e5e7eb;color:#444;">← Stock</a>
+</div>
+
+<!-- Filtres -->
+<form method="get" class="filtres">
+    <input type="date" name="date" value="{{ date_str }}">
+    <select name="stock">
+        <option value="">Tous produits</option>
+        {% for s in stocks %}
+        <option value="{{ s.id }}" {% if stock_id == s.id|stringformat:"s" %}selected{% endif %}>
+            {{ s.produit }}
+        </option>
+        {% endfor %}
+    </select>
+    <button type="submit" class="btn btn-primary">Filtrer</button>
+    <a href="{% url 'entrees_stock_liste' %}" class="btn" style="background:#e5e7eb;color:#444;">Tout voir</a>
+</form>
+
+<!-- Liste -->
+<div class="card">
+    {% if demandes %}
+        {% for d in demandes %}
+        <div class="entree-item">
+            <div class="entree-info">
+                <div class="entree-produit">
+                    {% if d.type_demande == 'nouveau_produit' %}
+                        🆕 {{ d.marque }} {{ d.nom_produit }}
+                    {% else %}
+                        📦 {{ d.stock.produit }}
+                    {% endif %}
+                </div>
+                <div class="entree-meta">
+                    Par {{ d.employe.username }} · {{ d.boutique.nom }} ·
+                    {{ d.date_traitement|date:"d/m/Y à H:i" }}
+                </div>
+                <div class="entree-prix">
+                    Prix achat : {{ d.prix_achat|floatformat:0 }} F ·
+                    Prix vente : {{ d.prix_vente_suggere|floatformat:0 }} F
+                </div>
+            </div>
+            <div style="display:flex; align-items:center; gap:12px;">
+                <div class="entree-qte">+{{ d.quantite }}</div>
+                <div class="actions">
+                    <a href="{% url 'entree_stock_modifier' d.id %}"
+                       class="btn btn-warning btn-sm">✏️</a>
+                    <a href="{% url 'entree_stock_supprimer' d.id %}"
+                       class="btn btn-danger btn-sm">🗑</a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+    <div class="empty">
+        <p style="font-size:36px">📭</p>
+        <p>Aucune entrée trouvée.</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

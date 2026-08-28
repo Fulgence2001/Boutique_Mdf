@@ -144,3 +144,14 @@
     </div>
 </div>
 {% endblock %}
+<script>
+document.querySelectorAll('form').forEach(form => {
+    form.addEventListener('submit', function() {
+        const btn = this.querySelector('button[type="submit"]');
+        if (btn) {
+            btn.disabled = true;
+            btn.textContent = '⏳ Traitement...';
+        }
+    });
+});
+</script>

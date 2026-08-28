@@ -1271,6 +1271,11 @@ def demande_traiter(request, demande_id):
         action = request.POST.get('action')
 
         if action == 'refuser':
+            # ── Protection double clic ────────────────
+            if demande.statut != 'en_attente':
+                messages.warning(request, "Cette demande a déjà été traitée.")
+                return redirect('demandes_liste')
+
             demande.statut = 'refuse'
             demande.notes_patron = request.POST.get('notes_patron', '')
             demande.date_traitement = timezone.now()
@@ -1279,6 +1284,11 @@ def demande_traiter(request, demande_id):
             return redirect('demandes_liste')
 
         if action == 'confirmer':
+            # ── Protection double clic ────────────────
+            if demande.statut != 'en_attente':
+                messages.warning(request, "Cette demande a déjà été confirmée.")
+                return redirect('demandes_liste')
+
             prix_achat = request.POST.get('prix_achat', '').strip()
             prix_vente = request.POST.get('prix_vente_suggere', '').strip()
 
@@ -1299,7 +1309,6 @@ def demande_traiter(request, demande_id):
                     stock.date_dernier_arrivage = demande.date_arrivage
                 stock.save()
 
-                # ── Enregistrement mouvement entrée ──
                 from .models import MouvementStock
                 MouvementStock.objects.create(
                     stock=stock,
@@ -1349,7 +1358,6 @@ def demande_traiter(request, demande_id):
                     stock.date_dernier_arrivage = demande.date_arrivage
                 stock.save()
 
-                # ── Enregistrement mouvement entrée ──
                 from .models import MouvementStock
                 MouvementStock.objects.create(
                     stock=stock,
@@ -1688,3 +1696,106 @@ def export_ventes_pdf(request):
     response = HttpResponse(html, content_type='text/html')
     return response
 
+# ── Liste des entrées stock (propriétaire) ─────────────
+@login_required
+@proprietaire_requis
+def entrees_stock_liste(request):
+    boutique = get_boutique_active(request)
+    if not boutique:
+        return redirect('choisir_boutique')
+
+    aujourd_hui = timezone.now().date()
+    date_str = request.GET.get('date', '')
+    stock_id = request.GET.get('stock', '')
+
+    # Récupère les demandes confirmées
+    boutiques = Boutique.objects.filter(proprietaire=request.user)
+    demandes = DemandeArrivage.objects.filter(
+        boutique__in=boutiques,
+        statut='confirme'
+    ).select_related(
+        'employe', 'boutique', 'stock__produit__marque', 'marque'
+    ).order_by('-date_traitement')
+
+    if date_str:
+        try:
+            from datetime import date as date_type
+            date_filtre = date_type.fromisoformat(date_str)
+            demandes = demandes.filter(date_traitement__date=date_filtre)
+        except ValueError:
+            pass
+
+    if stock_id:
+        demandes = demandes.filter(stock_id=stock_id)
+
+    stocks = StockBoutique.objects.filter(boutique__in=boutiques).select_related('produit__marque')
+
+    return render(request, 'stock/entrees_stock_liste.html', {
+        'demandes': demandes,
+        'boutique': boutique,
+        'stocks': stocks,
+        'date_str': date_str,
+        'stock_id': stock_id,
+        'aujourd_hui': aujourd_hui,
+    })
+
+
+# ── Modifier une entrée stock ──────────────────────────
+@login_required
+@proprietaire_requis
+def entree_stock_modifier(request, demande_id):
+    boutiques = Boutique.objects.filter(proprietaire=request.user)
+    demande = get_object_or_404(DemandeArrivage, id=demande_id, boutique__in=boutiques, statut='confirme')
+
+    if request.method == 'POST':
+        quantite = int(request.POST.get('quantite', demande.quantite))
+        prix_achat = float(request.POST.get('prix_achat', demande.prix_achat))
+        prix_vente = float(request.POST.get('prix_vente_suggere', demande.prix_vente_suggere))
+
+        # Calcule la différence de quantité
+        diff_quantite = quantite - demande.quantite
+
+        if demande.stock:
+            stock = demande.stock
+            stock.quantite += diff_quantite
+            stock.prix_achat = prix_achat
+            stock.prix_vente_suggere = prix_vente
+            stock.save()
+
+        # Met à jour la demande
+        demande.quantite = quantite
+        demande.prix_achat = prix_achat
+        demande.prix_vente_suggere = prix_vente
+        demande.save()
+
+        messages.success(request, "Entrée modifiée avec succès !")
+        return redirect('entrees_stock_liste')
+
+    return render(request, 'stock/entree_stock_modifier.html', {
+        'demande': demande,
+    })
+
+
+# ── Supprimer une entrée stock ─────────────────────────
+@login_required
+@proprietaire_requis
+def entree_stock_supprimer(request, demande_id):
+    boutiques = Boutique.objects.filter(proprietaire=request.user)
+    demande = get_object_or_404(DemandeArrivage, id=demande_id, boutique__in=boutiques, statut='confirme')
+
+    if request.method == 'POST':
+        if demande.stock:
+            stock = demande.stock
+            # Restitue la quantité
+            stock.quantite -= demande.quantite
+            if stock.quantite < 0:
+                stock.quantite = 0
+            stock.save()
+
+        demande.delete()
+        messages.success(request, "Entrée supprimée et stock corrigé.")
+        return redirect('entrees_stock_liste')
+
+    return render(request, 'stock/entree_stock_supprimer.html', {
+        'demande': demande,
+    })

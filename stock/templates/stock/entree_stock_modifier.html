@@ -1,0 +1,63 @@
+{% extends 'stock/base.html' %}
+{% block title %}Modifier l'entrée{% endblock %}
+
+{% block extra_css %}
+<style>
+    .card { background:white; border-radius:16px; padding:32px; max-width:520px; margin:0 auto; box-shadow:0 4px 20px rgba(0,0,0,.08); }
+    .card h1 { font-size:20px; margin-bottom:6px; }
+    .produit-info { background:#f0f4ff; border-radius:10px; padding:14px; margin-bottom:24px; font-size:14px; }
+    .produit-info strong { color:#4361ee; }
+    .form-group { margin-bottom:18px; }
+    .form-group label { display:block; font-size:13px; font-weight:600; margin-bottom:6px; color:#444; }
+    .form-group input { width:100%; padding:12px 14px; border:2px solid #e5e7eb; border-radius:10px; font-size:14px; }
+    .form-group input:focus { outline:none; border-color:#4361ee; }
+    .form-row { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+    .btn { padding:12px 24px; border:none; border-radius:10px; font-size:14px; font-weight:600; cursor:pointer; text-decoration:none; display:inline-block; }
+    .btn-primary { background:#4361ee; color:white; }
+    .warning-box { background:#fef3c7; border-radius:10px; padding:12px 16px; font-size:13px; color:#92400e; margin-bottom:20px; }
+</style>
+{% endblock %}
+
+{% block content %}
+<a href="{% url 'entrees_stock_liste' %}" style="color:#666; font-size:14px; text-decoration:none; display:block; margin-bottom:20px;">← Retour</a>
+
+<div class="card">
+    <h1>✏️ Modifier l'entrée</h1>
+
+    <div class="produit-info">
+        Produit : <strong>
+            {% if demande.type_demande == 'nouveau_produit' %}
+                {{ demande.marque }} {{ demande.nom_produit }}
+            {% else %}
+                {{ demande.stock.produit }}
+            {% endif %}
+        </strong><br>
+        Saisi par : {{ demande.employe.username }} ·
+        {{ demande.date_traitement|date:"d/m/Y à H:i" }}
+    </div>
+
+    <div class="warning-box">
+        ⚠️ La modification de la quantité ajustera automatiquement le stock actuel.
+    </div>
+
+    <form method="post">
+        {% csrf_token %}
+        <div class="form-group">
+            <label>Quantité *</label>
+            <input type="number" name="quantite" value="{{ demande.quantite }}" min="0" required>
+        </div>
+        <div class="form-row">
+            <div class="form-group">
+                <label>Prix d'achat (FCFA) *</label>
+                <input type="number" name="prix_achat" value="{{ demande.prix_achat }}" required>
+            </div>
+            <div class="form-group">
+                <label>Prix de vente (FCFA) *</label>
+                <input type="number" name="prix_vente_suggere" value="{{ demande.prix_vente_suggere }}" required>
+            </div>
+        </div>
+        <button type="submit" class="btn btn-primary">💾 Enregistrer</button>
+        <a href="{% url 'entrees_stock_liste' %}" class="btn" style="background:#e5e7eb;color:#444;margin-left:10px;">Annuler</a>
+    </form>
+</div>
+{% endblock %}

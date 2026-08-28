@@ -63,4 +63,9 @@ urlpatterns = [
 
     path('ventes/export-pdf/', views.export_ventes_pdf, name='export_ventes_pdf'),
 
+        # Entrées stock
+    path('entrees/', views.entrees_stock_liste, name='entrees_stock_liste'),
+    path('entrees/<int:demande_id>/modifier/', views.entree_stock_modifier, name='entree_stock_modifier'),
+    path('entrees/<int:demande_id>/supprimer/', views.entree_stock_supprimer, name='entree_stock_supprimer'),
+
 ]
